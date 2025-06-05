@@ -123,7 +123,6 @@ class FeatureModel(BaseModel):
     dataset_operator_enabled: bool = False
     webapp_copyright_enabled: bool = False
     workspace_members: LicenseLimitationModel = LicenseLimitationModel(enabled=False, size=0, limit=0)
-    plugin_installation_permission: PluginInstallationPermissionModel = PluginInstallationPermissionModel()
 
     # pydantic configs
     model_config = ConfigDict(protected_namespaces=())
@@ -149,6 +148,7 @@ class SystemFeatureModel(BaseModel):
     license: LicenseModel = LicenseModel()
     branding: BrandingModel = BrandingModel()
     webapp_auth: WebAppAuthModel = WebAppAuthModel()
+    plugin_installation_permission: PluginInstallationPermissionModel = PluginInstallationPermissionModel()
 
 
 class FeatureService:
