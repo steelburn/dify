@@ -169,6 +169,7 @@ class App(Base):
     @property
     def deleted_tools(self) -> list:
         from core.tools.tool_manager import ToolManager
+        from services.plugin.plugin_service import PluginService
 
         # get agent mode tools
         app_model_config = self.app_model_config
