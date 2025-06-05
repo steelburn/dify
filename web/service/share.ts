@@ -313,17 +313,3 @@ export const getUserCanAccess = (appId: string, isInstalledApp: boolean) => {
 export const getAppAccessModeByAppCode = (appCode: string) => {
   return get<{ accessMode: AccessMode }>(`/webapp/access-mode?appCode=${appCode}`)
 }
-
-export const getAppAccessMode = (appId: string, isInstalledApp: boolean) => {
-  if (isInstalledApp)
-    return consoleGet<{ accessMode: AccessMode }>(`/enterprise/webapp/app/access-mode?appId=${appId}`)
-
-  return get<{ accessMode: AccessMode }>(`/webapp/access-mode?appId=${appId}`)
-}
-
-export const getUserCanAccess = (appId: string, isInstalledApp: boolean) => {
-  if (isInstalledApp)
-    return consoleGet<{ result: boolean }>(`/enterprise/webapp/permission?appId=${appId}`)
-
-  return get<{ result: boolean }>(`/webapp/permission?appId=${appId}`)
-}
