@@ -26,6 +26,7 @@ type Props = {
   nodeOutputVars: NodeOutPutVar[],
   availableNodes: Node[],
   nodeId?: string
+  canChooseMCPTool?: boolean
 }
 
 const MultipleToolSelector = ({
@@ -40,6 +41,7 @@ const MultipleToolSelector = ({
   nodeOutputVars,
   availableNodes,
   nodeId,
+  canChooseMCPTool,
 }: Props) => {
   const { t } = useTranslation()
   const enabledCount = value.filter(item => item.enabled).length
@@ -55,6 +57,19 @@ const MultipleToolSelector = ({
   const [panelShowState, setPanelShowState] = React.useState(true)
   const handleAdd = (val: ToolValue) => {
     const newValue = [...value, val]
+    // deduplication
+    const deduplication = newValue.reduce((acc, cur) => {
+      if (!acc.find(item => item.provider_name === cur.provider_name && item.tool_name === cur.tool_name))
+        acc.push(cur)
+      return acc
+    }, [] as ToolValue[])
+    // update value
+    onChange(deduplication)
+    setOpen(false)
+  }
+
+  const handleAddMultiple = (val: ToolValue[]) => {
+    const newValue = [...value, ...val]
     // deduplication
     const deduplication = newValue.reduce((acc, cur) => {
       if (!acc.find(item => item.provider_name === cur.provider_name && item.tool_name === cur.tool_name))
@@ -134,6 +149,7 @@ const MultipleToolSelector = ({
             value={undefined}
             selectedTools={value}
             onSelect={handleAdd}
+            onSelectMultiple={handleAddMultiple}
             controlledState={open}
             onControlledStateChange={setOpen}
             trigger={
@@ -142,6 +158,7 @@ const MultipleToolSelector = ({
             panelShowState={panelShowState}
             onPanelShowStateChange={setPanelShowState}
             isEdit={false}
+            canChooseMCPTool={canChooseMCPTool}
           />
           {value.length === 0 && (
             <div className='system-xs-regular flex justify-center rounded-[10px] bg-background-section p-3 text-text-tertiary'>{t('plugin.detailPanel.toolSelector.empty')}</div>
@@ -156,9 +173,11 @@ const MultipleToolSelector = ({
                 value={item}
                 selectedTools={value}
                 onSelect={item => handleConfigure(item, index)}
+                onSelectMultiple={handleAddMultiple}
                 onDelete={() => handleDelete(index)}
                 supportEnableSwitch
                 isEdit
+                canChooseMCPTool={canChooseMCPTool}
               />
             </div>
           ))}

@@ -30,6 +30,7 @@ import { useAppContext } from '@/context/app-context'
 import {
   useAllBuiltInTools,
   useAllCustomTools,
+  useAllMCPTools,
   useAllWorkflowTools,
   useInvalidateAllBuiltInTools,
   useUpdateProviderCredentials,
@@ -54,15 +55,8 @@ type Props = {
   scope?: string
   value?: ToolValue
   selectedTools?: ToolValue[]
-  isEdit?: boolean
-  onSelect: (tool: {
-    provider_name: string
-    tool_name: string
-    tool_label: string
-    settings?: Record<string, any>
-    parameters?: Record<string, any>
-    extra?: Record<string, any>
-  }) => void
+  onSelect: (tool: ToolValue) => void
+  onSelectMultiple: (tool: ToolValue[]) => void
   onDelete?: () => void
   supportEnableSwitch?: boolean
   supportAddCustomTool?: boolean
@@ -74,6 +68,7 @@ type Props = {
   nodeOutputVars: NodeOutPutVar[],
   availableNodes: Node[],
   nodeId?: string,
+  canChooseMCPTool?: boolean,
 }
 const ToolSelector: FC<Props> = ({
   value,
@@ -83,6 +78,7 @@ const ToolSelector: FC<Props> = ({
   placement = 'left',
   offset = 4,
   onSelect,
+  onSelectMultiple,
   onDelete,
   scope,
   supportEnableSwitch,
@@ -94,6 +90,7 @@ const ToolSelector: FC<Props> = ({
   nodeOutputVars,
   availableNodes,
   nodeId = '',
+  canChooseMCPTool,
 }) => {
   const { t } = useTranslation()
   const [isShow, onShowChange] = useState(false)
@@ -105,6 +102,7 @@ const ToolSelector: FC<Props> = ({
   const { data: buildInTools } = useAllBuiltInTools()
   const { data: customTools } = useAllCustomTools()
   const { data: workflowTools } = useAllWorkflowTools()
+  const { data: mcpTools } = useAllMCPTools()
   const invalidateAllBuiltinTools = useInvalidateAllBuiltInTools()
   const invalidateInstalledPluginList = useInvalidateInstalledPluginList()
 
@@ -112,18 +110,19 @@ const ToolSelector: FC<Props> = ({
   const { inMarketPlace, manifest } = usePluginInstalledCheck(value?.provider_name)
 
   const currentProvider = useMemo(() => {
-    const mergedTools = [...(buildInTools || []), ...(customTools || []), ...(workflowTools || [])]
+    const mergedTools = [...(buildInTools || []), ...(customTools || []), ...(workflowTools || []), ...(mcpTools || [])]
     return mergedTools.find((toolWithProvider) => {
       return toolWithProvider.id === value?.provider_name
     })
-  }, [value, buildInTools, customTools, workflowTools])
+  }, [value, buildInTools, customTools, workflowTools, mcpTools])
 
   const [isShowChooseTool, setIsShowChooseTool] = useState(false)
-  const handleSelectTool = (tool: ToolDefaultValue) => {
+  const getToolValue = (tool: ToolDefaultValue) => {
     const settingValues = generateFormValue(tool.params, toolParametersToFormSchemas(tool.paramSchemas.filter(param => param.form !== 'llm') as any))
     const paramValues = generateFormValue(tool.params, toolParametersToFormSchemas(tool.paramSchemas.filter(param => param.form === 'llm') as any), true)
-    const toolValue = {
+    return {
       provider_name: tool.provider_id,
+      provider_show_name: tool.provider_name,
       type: tool.provider_type,
       tool_name: tool.tool_name,
       tool_label: tool.tool_label,
@@ -136,8 +135,15 @@ const ToolSelector: FC<Props> = ({
       },
       schemas: tool.paramSchemas,
     }
+  }
+  const handleSelectTool = (tool: ToolDefaultValue) => {
+    const toolValue = getToolValue(tool)
     onSelect(toolValue)
     // setIsShowChooseTool(false)
+  }
+  const handleSelectMultipleTool = (tool: ToolDefaultValue[]) => {
+    const toolValues = tool.map(item => getToolValue(item))
+    onSelectMultiple(toolValues)
   }
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -250,7 +256,9 @@ const ToolSelector: FC<Props> = ({
             <ToolItem
               open={isShow}
               icon={currentProvider?.icon || manifestIcon}
+              isMCPTool={currentProvider?.type === CollectionType.mcp}
               providerName={value.provider_name}
+              providerShowName={value.provider_show_name}
               toolLabel={value.tool_label || value.tool_name}
               showSwitch={supportEnableSwitch}
               switchValue={value.enabled}
@@ -300,8 +308,10 @@ const ToolSelector: FC<Props> = ({
                       disabled={false}
                       supportAddCustomTool
                       onSelect={handleSelectTool}
+                      onSelectMultiple={handleSelectMultipleTool}
                       scope={scope}
                       selectedTools={selectedTools}
+                      canChooseMCPTool={canChooseMCPTool}
                     />
                   </div>
                   <div className='flex flex-col gap-1'>

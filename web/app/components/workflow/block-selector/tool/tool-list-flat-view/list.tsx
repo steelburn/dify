@@ -13,6 +13,8 @@ type Props = {
   isShowLetterIndex: boolean
   hasSearchText: boolean
   onSelect: (type: BlockEnum, tool?: ToolDefaultValue) => void
+  canNotSelectMultiple?: boolean
+  onSelectMultiple?: (type: BlockEnum, tools: ToolDefaultValue[]) => void
   letters: string[]
   toolRefs: any
   selectedTools?: ToolValue[]
@@ -24,6 +26,8 @@ const ToolViewFlatView: FC<Props> = ({
   isShowLetterIndex,
   hasSearchText,
   onSelect,
+  canNotSelectMultiple,
+  onSelectMultiple,
   toolRefs,
   selectedTools,
 }) => {
@@ -53,6 +57,8 @@ const ToolViewFlatView: FC<Props> = ({
             isShowLetterIndex={isShowLetterIndex}
             hasSearchText={hasSearchText}
             onSelect={onSelect}
+            canNotSelectMultiple={canNotSelectMultiple}
+            onSelectMultiple={onSelectMultiple}
             selectedTools={selectedTools}
           />
         </div>

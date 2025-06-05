@@ -229,6 +229,8 @@ const translation = {
     'utilities': 'Utilities',
     'noResult': 'No match found',
     'agent': 'Agent Strategy',
+    'allAdded': 'All added',
+    'addAll': 'Add all',
   },
   blocks: {
     'start': 'Start',
@@ -876,6 +878,8 @@ const translation = {
         install: 'Install',
         cancel: 'Cancel',
       },
+      clickToViewParameterSchema: 'Click to view parameter schema',
+      parameterSchema: 'Parameter Schema',
     },
   },
   tracing: {

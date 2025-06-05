@@ -23,7 +23,7 @@ import {
 } from '@/service/tools'
 import type { CustomCollectionBackend } from '@/app/components/tools/types'
 import Toast from '@/app/components/base/toast'
-import { useAllBuiltInTools, useAllCustomTools, useAllWorkflowTools, useInvalidateAllCustomTools } from '@/service/use-tools'
+import { useAllBuiltInTools, useAllCustomTools, useAllMCPTools, useAllWorkflowTools, useInvalidateAllCustomTools } from '@/service/use-tools'
 import cn from '@/utils/classnames'
 
 type Props = {
@@ -35,9 +35,11 @@ type Props = {
   isShow: boolean
   onShowChange: (isShow: boolean) => void
   onSelect: (tool: ToolDefaultValue) => void
+  onSelectMultiple: (tools: ToolDefaultValue[]) => void
   supportAddCustomTool?: boolean
   scope?: string
   selectedTools?: ToolValue[]
+  canChooseMCPTool?: boolean
 }
 
 const ToolPicker: FC<Props> = ({
@@ -48,10 +50,12 @@ const ToolPicker: FC<Props> = ({
   isShow,
   onShowChange,
   onSelect,
+  onSelectMultiple,
   supportAddCustomTool,
   scope = 'all',
   selectedTools,
   panelClassName,
+  canChooseMCPTool,
 }) => {
   const { t } = useTranslation()
   const [searchText, setSearchText] = useState('')
@@ -61,6 +65,7 @@ const ToolPicker: FC<Props> = ({
   const { data: customTools } = useAllCustomTools()
   const invalidateCustomTools = useInvalidateAllCustomTools()
   const { data: workflowTools } = useAllWorkflowTools()
+  const { data: mcpTools } = useAllMCPTools()
 
   const { builtinToolList, customToolList, workflowToolList } = useMemo(() => {
     if (scope === 'plugins') {
@@ -100,6 +105,10 @@ const ToolPicker: FC<Props> = ({
 
   const handleSelect = (_type: BlockEnum, tool?: ToolDefaultValue) => {
     onSelect(tool!)
+  }
+
+  const handleSelectMultiple = (_type: BlockEnum, tools: ToolDefaultValue[]) => {
+    onSelectMultiple(tools)
   }
 
   const [isShowEditCollectionToolModal, {
@@ -151,6 +160,10 @@ const ToolPicker: FC<Props> = ({
               onTagsChange={setTags}
               size='small'
               placeholder={t('plugin.searchTools')!}
+              supportAddCustomTool={supportAddCustomTool}
+              onAddedCustomTool={handleAddedCustomTool}
+              onShowAddCustomCollectionModal={showEditCustomCollectionModal}
+
             />
           </div>
           <AllTools
@@ -159,13 +172,13 @@ const ToolPicker: FC<Props> = ({
             tags={tags}
             searchText={searchText}
             onSelect={handleSelect}
+            onSelectMultiple={handleSelectMultiple}
             buildInTools={builtinToolList || []}
             customTools={customToolList || []}
             workflowTools={workflowToolList || []}
-            supportAddCustomTool={supportAddCustomTool}
-            onAddedCustomTool={handleAddedCustomTool}
-            onShowAddCustomCollectionModal={showEditCustomCollectionModal}
+            mcpTools={mcpTools || []}
             selectedTools={selectedTools}
+            isHideMCPTools={!canChooseMCPTool}
           />
         </div>
       </PortalToFollowElemContent>
