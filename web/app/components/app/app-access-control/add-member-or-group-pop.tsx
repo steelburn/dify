@@ -46,15 +46,15 @@ export default function AddMemberOrGroupDialog() {
 
   return <PortalToFollowElem open={open} onOpenChange={setOpen} offset={{ crossAxis: 300 }} placement='bottom-end'>
     <PortalToFollowElemTrigger asChild>
-      <Button variant='ghost-accent' size='small' className='shrink-0 flex items-center gap-x-0.5' onClick={() => setOpen(!open)}>
-        <RiAddCircleFill className='w-4 h-4' />
+      <Button variant='ghost-accent' size='small' className='flex shrink-0 items-center gap-x-0.5' onClick={() => setOpen(!open)}>
+        <RiAddCircleFill className='h-4 w-4' />
         <span>{t('common.operation.add')}</span>
       </Button>
     </PortalToFollowElemTrigger>
     {open && <FloatingOverlay />}
     <PortalToFollowElemContent className='z-[25]'>
-      <div className='w-[400px] max-h-[400px] relative overflow-y-auto flex flex-col border-[0.5px] border-components-panel-border rounded-xl bg-components-panel-bg-blur backdrop-blur-[5px] shadow-lg'>
-        <div className='p-2 pb-0.5 sticky top-0 bg-components-panel-bg-blur backdrop-blur-[5px] z-1'>
+      <div className='relative flex max-h-[400px] w-[400px] flex-col overflow-y-auto rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg-blur shadow-lg backdrop-blur-[5px]'>
+        <div className='sticky top-0 z-10 bg-components-panel-bg-blur p-2 pb-0.5 backdrop-blur-[5px]'>
           <Input value={keyword} onChange={handleKeywordChange} showLeftIcon placeholder={t('app.accessControlDialog.operateGroupAndMember.searchPlaceholder') as string} />
         </div>
         {
@@ -62,7 +62,7 @@ export default function AddMemberOrGroupDialog() {
             ? <div className='p-1'><Loading /></div>
             : (data?.pages?.length ?? 0) > 0
               ? <>
-                <div className='flex items-center h-7 px-2 py-0.5'>
+                <div className='flex h-7 items-center px-2 py-0.5'>
                   <SelectedGroupsBreadCrumb />
                 </div>
                 <div className='p-1'>
@@ -71,7 +71,7 @@ export default function AddMemberOrGroupDialog() {
                 </div>
                 <div ref={anchorRef} className='h-0'> </div>
               </>
-              : <div className='flex items-center justify-center h-7 px-2 py-0.5'>
+              : <div className='flex h-7 items-center justify-center px-2 py-0.5'>
                 <span className='system-xs-regular text-text-tertiary'>{t('app.accessControlDialog.operateGroupAndMember.noResult')}</span>
               </div>
         }
@@ -105,12 +105,12 @@ function SelectedGroupsBreadCrumb() {
   const handleReset = useCallback(() => {
     setSelectedGroupsForBreadcrumb([])
   }, [setSelectedGroupsForBreadcrumb])
-  return <div className='flex items-center h-7 px-2 py-0.5 gap-x-0.5'>
+  return <div className='flex h-7 items-center gap-x-0.5 px-2 py-0.5'>
     <span className={classNames('system-xs-regular text-text-tertiary', selectedGroupsForBreadcrumb.length > 0 && 'text-text-accent cursor-pointer')} onClick={handleReset}>{t('app.accessControlDialog.operateGroupAndMember.allMembers')}</span>
     {selectedGroupsForBreadcrumb.map((group, index) => {
-      return <div key={index} className='flex items-center gap-x-0.5 text-text-tertiary system-xs-regular'>
+      return <div key={index} className='system-xs-regular flex items-center gap-x-0.5 text-text-tertiary'>
         <span>/</span>
-        <span className={index === selectedGroupsForBreadcrumb.length - 1 ? '' : 'text-text-accent cursor-pointer'} onClick={() => handleBreadCrumbClick(index)}>{group.name}</span>
+        <span className={index === selectedGroupsForBreadcrumb.length - 1 ? '' : 'cursor-pointer text-text-accent'} onClick={() => handleBreadCrumbClick(index)}>{group.name}</span>
       </div>
     })}
   </div>
@@ -141,20 +141,20 @@ function GroupItem({ group }: GroupItemProps) {
     setSelectedGroupsForBreadcrumb([...selectedGroupsForBreadcrumb, group])
   }, [selectedGroupsForBreadcrumb, setSelectedGroupsForBreadcrumb, group])
   return <BaseItem>
-    <Checkbox checked={isChecked} className='w-4 h-4 shrink-0' onCheck={handleCheckChange} />
-    <div className='flex item-center grow'>
-      <div className='w-5 h-5 rounded-full bg-components-icon-bg-blue-solid overflow-hidden mr-2'>
-        <div className='w-full h-full flex items-center justify-center bg-access-app-icon-mask-bg'>
-          <RiOrganizationChart className='w-[14px] h-[14px] text-components-avatar-shape-fill-stop-0' />
+    <Checkbox checked={isChecked} className='h-4 w-4 shrink-0' onCheck={handleCheckChange} />
+    <div className='item-center flex grow'>
+      <div className='mr-2 h-5 w-5 overflow-hidden rounded-full bg-components-icon-bg-blue-solid'>
+        <div className='bg-access-app-icon-mask-bg flex h-full w-full items-center justify-center'>
+          <RiOrganizationChart className='h-[14px] w-[14px] text-components-avatar-shape-fill-stop-0' />
         </div>
       </div>
-      <p className='system-sm-medium text-text-secondary mr-1'>{group.name}</p>
+      <p className='system-sm-medium mr-1 text-text-secondary'>{group.name}</p>
       <p className='system-xs-regular text-text-tertiary'>{group.groupSize}</p>
     </div>
     <Button size="small" disabled={isChecked} variant='ghost-accent'
-      className='py-1 px-1.5 shrink-0 flex items-center justify-between' onClick={handleExpandClick}>
+      className='flex shrink-0 items-center justify-between px-1.5 py-1' onClick={handleExpandClick}>
       <span className='px-[3px]'>{t('app.accessControlDialog.operateGroupAndMember.expand')}</span>
-      <RiArrowRightSLine className='w-4 h-4' />
+      <RiArrowRightSLine className='h-4 w-4' />
     </Button>
   </BaseItem>
 }
@@ -179,14 +179,14 @@ function MemberItem({ member }: MemberItemProps) {
     }
   }, [specificMembers, setSpecificMembers, member, isChecked])
   return <BaseItem className='pr-3'>
-    <Checkbox checked={isChecked} className='w-4 h-4 shrink-0' onCheck={handleCheckChange} />
-    <div className='flex items-center grow'>
-      <div className='w-5 h-5 rounded-full bg-components-icon-bg-blue-solid overflow-hidden mr-2'>
-        <div className='w-full h-full flex items-center justify-center bg-access-app-icon-mask-bg'>
-          <Avatar className='w-[14px] h-[14px]' textClassName='text-[12px]' avatar={null} name={member.name} />
+    <Checkbox checked={isChecked} className='h-4 w-4 shrink-0' onCheck={handleCheckChange} />
+    <div className='flex grow items-center'>
+      <div className='mr-2 h-5 w-5 overflow-hidden rounded-full bg-components-icon-bg-blue-solid'>
+        <div className='bg-access-app-icon-mask-bg flex h-full w-full items-center justify-center'>
+          <Avatar className='h-[14px] w-[14px]' textClassName='text-[12px]' avatar={null} name={member.name} />
         </div>
       </div>
-      <p className='system-sm-medium text-text-secondary mr-1'>{member.name}</p>
+      <p className='system-sm-medium mr-1 text-text-secondary'>{member.name}</p>
       {currentUser.email === member.email && <p className='system-xs-regular text-text-tertiary'>({t('common.you')})</p>}
     </div>
     <p className='system-xs-regular text-text-quaternary'>{member.email}</p>

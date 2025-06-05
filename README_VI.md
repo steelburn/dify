@@ -1,10 +1,10 @@
-![cover-v5-optimized](https://github.com/langgenius/dify/assets/13230914/f9e19af5-61ba-4119-b926-d10c4c06ebab)
+![cover-v5-optimized](./images/GitHub_README_if.png)
 
 <p align="center">
   <a href="https://cloud.dify.ai">Dify Cloud</a> ·
   <a href="https://docs.dify.ai/getting-started/install-self-hosted">Tự triển khai</a> ·
   <a href="https://docs.dify.ai">Tài liệu</a> ·
-  <a href="https://udify.app/chat/22L1zSxg6yW1cWQg">Yêu cầu doanh nghiệp</a>
+  <a href="https://dify.ai/pricing">Tổng quan các lựa chọn sản phẩm Dify</a>
 </p>
 
 <p align="center">
@@ -45,6 +45,7 @@
   <a href="./README_AR.md"><img alt="README بالعربية" src="https://img.shields.io/badge/العربية-d9d9d9"></a>
   <a href="./README_TR.md"><img alt="Türkçe README" src="https://img.shields.io/badge/Türkçe-d9d9d9"></a>
   <a href="./README_VI.md"><img alt="README Tiếng Việt" src="https://img.shields.io/badge/Ti%E1%BA%BFng%20Vi%E1%BB%87t-d9d9d9"></a>
+  <a href="./README_BN.md"><img alt="README in বাংলা" src="https://img.shields.io/badge/বাংলা-d9d9d9"></a>
 </p>
 
 
@@ -53,11 +54,6 @@ Dify là một nền tảng phát triển ứng dụng LLM mã nguồn mở. Gia
 
 **1. Quy trình làm việc**: 
   Xây dựng và kiểm tra các quy trình làm việc AI mạnh mẽ trên một canvas trực quan, tận dụng tất cả các tính năng sau đây và hơn thế nữa.
-
-
-  https://github.com/langgenius/dify/assets/13230914/356df23e-1604-483d-80a6-9517ece318aa
-
-
 
 **2. Hỗ trợ mô hình toàn diện**: 
   Tích hợp liền mạch với hàng trăm mô hình LLM độc quyền / mã nguồn mở từ hàng chục nhà cung cấp suy luận và giải pháp tự lưu trữ, bao gồm GPT, Mistral, Llama3, và bất kỳ mô hình tương thích API OpenAI nào. Danh sách đầy đủ các nhà cung cấp mô hình được hỗ trợ có thể được tìm thấy [tại đây](https://docs.dify.ai/getting-started/readme/model-providers).
@@ -199,6 +195,7 @@ Nếu bạn muốn cấu hình một cài đặt có độ sẵn sàng cao, có 
 - [Helm Chart bởi @LeoQuote](https://github.com/douban/charts/tree/master/charts/dify)
 - [Helm Chart bởi @BorisPolonsky](https://github.com/BorisPolonsky/dify-helm)
 - [Tệp YAML bởi @Winson-030](https://github.com/Winson-030/dify-kubernetes)
+- [Tệp YAML bởi @wyy-holding](https://github.com/wyy-holding/dify-k8s)
 
 #### Sử dụng Terraform để Triển khai
 

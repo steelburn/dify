@@ -1,6 +1,6 @@
 'use client'
-import { Dialog } from '@headlessui/react'
-import { RiBuildingLine, RiGlobalLine } from '@remixicon/react'
+import { Description as DialogDescription, DialogTitle } from '@headlessui/react'
+import { RiBuildingLine, RiGlobalLine, RiVerifiedBadgeLine } from '@remixicon/react'
 import { useTranslation } from 'react-i18next'
 import { useCallback, useEffect } from 'react'
 import Button from '../../base/button'
@@ -66,34 +66,42 @@ export default function AccessControl(props: AccessControlProps) {
   }, [updateAccessMode, app, specificGroups, specificMembers, t, onConfirm, currentMenu])
   return <AccessControlDialog show onClose={onClose}>
     <div className='flex flex-col gap-y-3'>
-      <div className='pt-6 pr-14 pb-3 pl-6'>
-        <Dialog.Title className='title-2xl-semi-bold text-text-primary'>{t('app.accessControlDialog.title')}</Dialog.Title>
-        <Dialog.Description className='mt-1 system-xs-regular text-text-tertiary'>{t('app.accessControlDialog.description')}</Dialog.Description>
+      <div className='pb-3 pl-6 pr-14 pt-6'>
+        <DialogTitle className='title-2xl-semi-bold text-text-primary'>{t('app.accessControlDialog.title')}</DialogTitle>
+        <DialogDescription className='system-xs-regular mt-1 text-text-tertiary'>{t('app.accessControlDialog.description')}</DialogDescription>
       </div>
-      <div className='px-6 pb-3 flex flex-col gap-y-1'>
+      <div className='flex flex-col gap-y-1 px-6 pb-3'>
         <div className='leading-6'>
           <p className='system-sm-medium'>{t('app.accessControlDialog.accessLabel')}</p>
         </div>
         <AccessControlItem type={AccessMode.ORGANIZATION}>
           <div className='flex items-center p-3'>
-            <div className='grow flex items-center gap-x-2'>
-              <RiBuildingLine className='w-4 h-4 text-text-primary' />
+            <div className='flex grow items-center gap-x-2'>
+              <RiBuildingLine className='h-4 w-4 text-text-primary' />
               <p className='system-sm-medium text-text-primary'>{t('app.accessControlDialog.accessItems.organization')}</p>
             </div>
-            {!hideTip && <WebAppSSONotEnabledTip />}
           </div>
         </AccessControlItem>
         <AccessControlItem type={AccessMode.SPECIFIC_GROUPS_MEMBERS}>
           <SpecificGroupsOrMembers />
         </AccessControlItem>
+        <AccessControlItem type={AccessMode.EXTERNAL_MEMBERS}>
+          <div className='flex items-center p-3'>
+            <div className='flex grow items-center gap-x-2'>
+              <RiVerifiedBadgeLine className='h-4 w-4 text-text-primary' />
+              <p className='system-sm-medium text-text-primary'>{t('app.accessControlDialog.accessItems.external')}</p>
+            </div>
+            {!hideTip && <WebAppSSONotEnabledTip />}
+          </div>
+        </AccessControlItem>
         <AccessControlItem type={AccessMode.PUBLIC}>
-          <div className='flex items-center p-3 gap-x-2'>
-            <RiGlobalLine className='w-4 h-4 text-text-primary' />
+          <div className='flex items-center gap-x-2 p-3'>
+            <RiGlobalLine className='h-4 w-4 text-text-primary' />
             <p className='system-sm-medium text-text-primary'>{t('app.accessControlDialog.accessItems.anyone')}</p>
           </div>
         </AccessControlItem>
       </div>
-      <div className='flex items-center justify-end p-6 pt-5 gap-x-2'>
+      <div className='flex items-center justify-end gap-x-2 p-6 pt-5'>
         <Button onClick={onClose}>{t('common.operation.cancel')}</Button>
         <Button disabled={isPending} loading={isPending} variant='primary' onClick={handleConfirm}>{t('common.operation.confirm')}</Button>
       </div>

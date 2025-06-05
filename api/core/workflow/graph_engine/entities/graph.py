@@ -36,7 +36,7 @@ class Graph(BaseModel):
     root_node_id: str = Field(..., description="root node id of the graph")
     node_ids: list[str] = Field(default_factory=list, description="graph node ids")
     node_id_config_mapping: dict[str, dict] = Field(
-        default_factory=list, description="node configs mapping (node id: node config)"
+        default_factory=dict, description="node configs mapping (node id: node config)"
     )
     edge_mapping: dict[str, list[GraphEdge]] = Field(
         default_factory=dict, description="graph edge mapping (source node id: edges)"
@@ -590,8 +590,6 @@ class Graph(BaseModel):
                             start_node_id=node_id,
                             routes_node_ids=routes_node_ids,
                         )
-                        # Exclude conditional branch nodes
-                        and all(edge.run_condition is None for edge in reverse_edge_mapping.get(node_id, []))
                     ):
                         if node_id not in merge_branch_node_ids:
                             merge_branch_node_ids[node_id] = []

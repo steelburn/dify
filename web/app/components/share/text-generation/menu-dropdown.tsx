@@ -6,9 +6,8 @@ import type { Placement } from '@floating-ui/react'
 import {
   RiEqualizer2Line,
 } from '@remixicon/react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Divider from '../../base/divider'
-import { removeAccessToken } from '../utils'
 import InfoModal from './info-modal'
 import ActionButton from '@/app/components/base/action-button'
 import {
@@ -16,8 +15,11 @@ import {
   PortalToFollowElemContent,
   PortalToFollowElemTrigger,
 } from '@/app/components/base/portal-to-follow-elem'
+import ThemeSwitcher from '@/app/components/base/theme-switcher'
 import type { SiteInfo } from '@/models/share'
 import cn from '@/utils/classnames'
+import { useGlobalPublicStore } from '@/context/global-public-context'
+import { AccessMode } from '@/models/access-control'
 
 type Props = {
   data?: SiteInfo
@@ -30,7 +32,9 @@ const MenuDropdown: FC<Props> = ({
   placement,
   hideLogout,
 }) => {
+  const webAppAccessMode = useGlobalPublicStore(s => s.webAppAccessMode)
   const router = useRouter()
+  const pathname = usePathname()
   const { t } = useTranslation()
   const [open, doSetOpen] = useState(false)
   const openRef = useRef(open)
@@ -44,9 +48,10 @@ const MenuDropdown: FC<Props> = ({
   }, [setOpen])
 
   const handleLogout = useCallback(() => {
-    removeAccessToken()
-    router.replace(`/webapp-signin?redirect_url=${window.location.href}`)
-  }, [router])
+    localStorage.removeItem('token')
+    localStorage.removeItem('webapp_access_token')
+    router.replace(`/webapp-signin?redirect_url=${pathname}`)
+  }, [router, pathname])
 
   const [show, setShow] = useState(false)
 
@@ -71,6 +76,13 @@ const MenuDropdown: FC<Props> = ({
         <PortalToFollowElemContent className='z-50'>
           <div className='w-[224px] rounded-xl border-[0.5px] border-components-panel-border bg-components-panel-bg-blur shadow-lg backdrop-blur-sm'>
             <div className='p-1'>
+              <div className={cn('system-md-regular flex cursor-pointer items-center rounded-lg py-1.5 pl-3 pr-2 text-text-secondary')}>
+                <div className='grow'>{t('common.theme.theme')}</div>
+                <ThemeSwitcher />
+              </div>
+            </div>
+            <Divider type='horizontal' className='my-0' />
+            <div className='p-1'>
               {data?.privacy_policy && (
                 <a href={data.privacy_policy} target='_blank' className='system-md-regular flex cursor-pointer items-center rounded-lg px-3 py-1.5 text-text-secondary hover:bg-state-base-hover'>
                   <span className='grow'>{t('share.chat.privacyPolicyMiddle')}</span>
@@ -83,18 +95,17 @@ const MenuDropdown: FC<Props> = ({
                 }}
                 className='system-md-regular cursor-pointer rounded-lg px-3 py-1.5 text-text-secondary hover:bg-state-base-hover'
               >{t('common.userProfile.about')}</div>
-              {false && (
-                <>
-                  <Divider />
-                  <div
-                    onClick={() => {
-                      handleLogout()
-                    }}
-                    className='system-md-regular cursor-pointer rounded-lg px-3 py-1.5 text-text-destructive hover:bg-state-base-hover'
-                  >{t('common.userProfile.logout')}</div>
-                </>
-              )}
             </div>
+            {!(hideLogout || webAppAccessMode === AccessMode.EXTERNAL_MEMBERS || webAppAccessMode === AccessMode.PUBLIC) && (
+              <div className='p-1'>
+                <div
+                  onClick={handleLogout}
+                  className='system-md-regular cursor-pointer rounded-lg px-3 py-1.5 text-text-secondary hover:bg-state-base-hover'
+                >
+                  {t('common.userProfile.logout')}
+                </div>
+              </div>
+            )}
           </div>
         </PortalToFollowElemContent>
       </PortalToFollowElem>

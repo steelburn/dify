@@ -7,6 +7,8 @@ import Sidebar from '@/app/components/explore/sidebar'
 import { useAppContext } from '@/context/app-context'
 import { fetchMembers } from '@/service/common'
 import type { InstalledApp } from '@/models/explore'
+import { useTranslation } from 'react-i18next'
+import useDocumentTitle from '@/hooks/use-document-title'
 
 export type IExploreProps = {
   children: React.ReactNode
@@ -20,6 +22,9 @@ const Explore: FC<IExploreProps> = ({
   const { userProfile, isCurrentWorkspaceDatasetOperator } = useAppContext()
   const [hasEditPermission, setHasEditPermission] = useState(false)
   const [installedApps, setInstalledApps] = useState<InstalledApp[]>([])
+  const { t } = useTranslation()
+
+  useDocumentTitle(t('common.menus.explore'))
 
   useEffect(() => {
     (async () => {
@@ -37,7 +42,7 @@ const Explore: FC<IExploreProps> = ({
   }, [isCurrentWorkspaceDatasetOperator])
 
   return (
-    <div className='flex h-full bg-gray-100 border-t border-gray-200 overflow-hidden'>
+    <div className='flex h-full overflow-hidden border-t border-divider-regular bg-background-body'>
       <ExploreContext.Provider
         value={
           {
@@ -50,7 +55,7 @@ const Explore: FC<IExploreProps> = ({
         }
       >
         <Sidebar controlUpdateInstalledApps={controlUpdateInstalledApps} />
-        <div className='grow w-0'>
+        <div className='w-0 grow'>
           {children}
         </div>
       </ExploreContext.Provider>

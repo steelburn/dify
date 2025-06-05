@@ -21,6 +21,9 @@ type License = {
 export type SystemFeatures = {
   sso_enforced_for_signin: boolean
   sso_enforced_for_signin_protocol: SSOProtocol | ''
+  sso_enforced_for_web: boolean
+  sso_enforced_for_web_protocol: SSOProtocol | ''
+  enable_marketplace: boolean
   enable_email_code_login: boolean
   enable_email_password_login: boolean
   enable_social_oauth_login: boolean
@@ -49,6 +52,9 @@ export type SystemFeatures = {
 export const defaultSystemFeatures: SystemFeatures = {
   sso_enforced_for_signin: false,
   sso_enforced_for_signin_protocol: '',
+  sso_enforced_for_web: false,
+  sso_enforced_for_web_protocol: '',
+  enable_marketplace: false,
   enable_email_code_login: false,
   enable_email_password_login: false,
   enable_social_oauth_login: false,

@@ -26,8 +26,8 @@ export default function Sidebar({ current, categories, onClick, onCreateFromBlan
       {categories.map(category => (<CategoryItem key={category} category={category} active={current === category} onClick={onClick} />))}
     </ul>
     <Divider bgStyle='gradient' />
-    <div className='px-3 py-1 flex items-center gap-1 text-text-tertiary cursor-pointer' onClick={onCreateFromBlank}>
-      <RiStickyNoteAddLine className='w-3.5 h-3.5' />
+    <div className='flex cursor-pointer items-center gap-1 px-3 py-1 text-text-tertiary' onClick={onCreateFromBlank}>
+      <RiStickyNoteAddLine className='h-3.5 w-3.5' />
       <span className='system-xs-regular'>{t('app.newApp.startFromBlank')}</span>
     </div>
   </div>

@@ -1,10 +1,10 @@
-![cover-v5-optimized](https://github.com/langgenius/dify/assets/13230914/f9e19af5-61ba-4119-b926-d10c4c06ebab)
+![cover-v5-optimized](./images/GitHub_README_if.png)
 
 <p align="center">
   <a href="https://cloud.dify.ai">Dify Bulut</a> ·
   <a href="https://docs.dify.ai/getting-started/install-self-hosted">Kendi Sunucunuzda Barındırma</a> ·
   <a href="https://docs.dify.ai">Dokümantasyon</a> ·
-  <a href="https://udify.app/chat/22L1zSxg6yW1cWQg">Yalnızca İngilizce: Kurumsal Sorgulama</a>
+  <a href="https://dify.ai/pricing">Dify ürün seçeneklerine genel bakış</a>
 </p>
 
 <p align="center">
@@ -45,6 +45,7 @@
   <a href="./README_AR.md"><img alt="README بالعربية" src="https://img.shields.io/badge/العربية-d9d9d9"></a>
   <a href="./README_TR.md"><img alt="Türkçe README" src="https://img.shields.io/badge/Türkçe-d9d9d9"></a>
   <a href="./README_VI.md"><img alt="README Tiếng Việt" src="https://img.shields.io/badge/Ti%E1%BA%BFng%20Vi%E1%BB%87t-d9d9d9"></a>
+  <a href="./README_BN.md"><img alt="README in বাংলা" src="https://img.shields.io/badge/বাংলা-d9d9d9"></a>
 </p>
 
 
@@ -53,11 +54,6 @@ Dify, açık kaynaklı bir LLM uygulama geliştirme platformudur. Sezgisel aray�
 
 **1. Workflow**: 
 Görsel bir arayüz üzerinde güçlü AI iş akışları oluşturun ve test edin, aşağıdaki tüm özellikleri ve daha fazlasını kullanarak.
-
-
-  https://github.com/langgenius/dify/assets/13230914/356df23e-1604-483d-80a6-9517ece318aa
-
-
 
 **2. Kapsamlı model desteği**:
 Çok sayıda çıkarım sağlayıcısı ve kendi kendine barındırılan çözümlerden yüzlerce özel / açık kaynaklı LLM ile sorunsuz entegrasyon sağlar. GPT, Mistral, Llama3 ve OpenAI API uyumlu tüm modelleri kapsar. Desteklenen model sağlayıcılarının tam listesine [buradan](https://docs.dify.ai/getting-started/readme/model-providers) ulaşabilirsiniz.
@@ -197,6 +193,7 @@ Yüksek kullanılabilirliğe sahip bir kurulum yapılandırmak isterseniz, Dify'
 - [@LeoQuote tarafından Helm Chart](https://github.com/douban/charts/tree/master/charts/dify)
 - [@BorisPolonsky tarafından Helm Chart](https://github.com/BorisPolonsky/dify-helm)
 - [@Winson-030 tarafından YAML dosyası](https://github.com/Winson-030/dify-kubernetes)
+- [@wyy-holding tarafından YAML dosyası](https://github.com/wyy-holding/dify-k8s)
 
 #### Dağıtım için Terraform Kullanımı
 
@@ -230,7 +227,7 @@ Aynı zamanda, lütfen Dify'ı sosyal medyada, etkinliklerde ve konferanslarda p
 
 ## Topluluk & iletişim
 
-* [Github Tartışmaları](https://github.com/langgenius/dify/discussions). En uygun: geri bildirim paylaşmak ve soru sormak için.
+* [GitHub Tartışmaları](https://github.com/langgenius/dify/discussions). En uygun: geri bildirim paylaşmak ve soru sormak için.
 * [GitHub Sorunları](https://github.com/langgenius/dify/issues). En uygun: Dify.AI kullanırken karşılaştığınız hatalar ve özellik önerileri için. [Katkı Kılavuzumuza](https://github.com/langgenius/dify/blob/main/CONTRIBUTING.md) bakın.
 * [Discord](https://discord.gg/FngNHpbcY7). En uygun: uygulamalarınızı paylaşmak ve toplulukla vakit geçirmek için.
 * [X(Twitter)](https://twitter.com/dify_ai). En uygun: uygulamalarınızı paylaşmak ve toplulukla vakit geçirmek için.

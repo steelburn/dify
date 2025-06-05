@@ -3,16 +3,14 @@ from datetime import UTC, datetime
 from typing import Any
 
 from flask import request
-from flask_login import current_user  # type: ignore
-from flask_restful import (Resource, inputs, marshal_with,  # type: ignore
-                           reqparse)
+from flask_login import current_user
+from flask_restful import Resource, inputs, marshal_with, reqparse
 from sqlalchemy import and_
 from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
 from controllers.console import api
 from controllers.console.explore.wraps import InstalledAppResource
-from controllers.console.wraps import (account_initialization_required,
-                                       cloud_edition_billing_resource_check)
+from controllers.console.wraps import account_initialization_required, cloud_edition_billing_resource_check
 from extensions.ext_database import db
 from fields.installed_app_fields import installed_app_list_fields
 from libs.login import login_required
@@ -21,6 +19,8 @@ from services.account_service import TenantService
 from services.app_service import AppService
 from services.enterprise.enterprise_service import EnterpriseService
 from services.feature_service import FeatureService
+
+logger = logging.getLogger(__name__)
 
 
 class InstalledAppsListApi(Resource):
@@ -59,7 +59,14 @@ class InstalledAppsListApi(Resource):
         if FeatureService.get_system_features().webapp_auth.enabled:
             user_id = current_user.id
             res = []
+            app_ids = [installed_app["app"].id for installed_app in installed_app_list]
+            webapp_settings = EnterpriseService.WebAppAuth.batch_get_app_access_mode_by_id(app_ids)
             for installed_app in installed_app_list:
+                webapp_setting = webapp_settings.get(installed_app["app"].id)
+                if not webapp_setting:
+                    continue
+                if webapp_setting.access_mode == "sso_verified":
+                    continue
                 app_code = AppService.get_app_code_by_id(str(installed_app["app"].id))
                 if EnterpriseService.WebAppAuth.is_user_allowed_to_access_webapp(
                     user_id=user_id,
@@ -67,9 +74,7 @@ class InstalledAppsListApi(Resource):
                 ):
                     res.append(installed_app)
             installed_app_list = res
-            logging.info(
-                f"installed_app_list: {installed_app_list}, user_id: {user_id}"
-            )
+            logger.debug(f"installed_app_list: {installed_app_list}, user_id: {user_id}")
 
         installed_app_list.sort(
             key=lambda app: (
@@ -89,7 +94,7 @@ class InstalledAppsListApi(Resource):
         parser.add_argument("app_id", type=str, required=True, help="Invalid app_id")
         args = parser.parse_args()
 
-        recommended_app = RecommendedApp.query.filter(RecommendedApp.app_id == args["app_id"]).first()
+        recommended_app = db.session.query(RecommendedApp).filter(RecommendedApp.app_id == args["app_id"]).first()
         if recommended_app is None:
             raise NotFound("App not found")
 
@@ -102,9 +107,11 @@ class InstalledAppsListApi(Resource):
         if not app.is_public:
             raise Forbidden("You can't install a non-public app")
 
-        installed_app = InstalledApp.query.filter(
-            and_(InstalledApp.app_id == args["app_id"], InstalledApp.tenant_id == current_tenant_id)
-        ).first()
+        installed_app = (
+            db.session.query(InstalledApp)
+            .filter(and_(InstalledApp.app_id == args["app_id"], InstalledApp.tenant_id == current_tenant_id))
+            .first()
+        )
 
         if installed_app is None:
             # todo: position
@@ -136,7 +143,7 @@ class InstalledAppApi(InstalledAppResource):
         db.session.delete(installed_app)
         db.session.commit()
 
-        return {"result": "success", "message": "App uninstalled successfully"}
+        return {"result": "success", "message": "App uninstalled successfully"}, 204
 
     def patch(self, installed_app):
         parser = reqparse.RequestParser()

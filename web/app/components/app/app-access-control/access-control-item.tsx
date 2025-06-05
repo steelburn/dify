@@ -11,7 +11,7 @@ const AccessControlItem: FC<AccessControlItemProps> = ({ type, children }) => {
   const { currentMenu, setCurrentMenu } = useAccessControlStore(s => ({ currentMenu: s.currentMenu, setCurrentMenu: s.setCurrentMenu }))
   if (currentMenu !== type) {
     return <div
-      className="rounded-[10px] border-[1px] cursor-pointer
+      className="cursor-pointer rounded-[10px] border-[1px]
       border-components-option-card-option-border bg-components-option-card-option-bg
       hover:border-components-option-card-option-border-hover hover:bg-components-option-card-option-bg-hover"
       onClick={() => setCurrentMenu(type)} >

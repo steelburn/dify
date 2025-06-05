@@ -1,6 +1,5 @@
 'use client'
 import Header from '../signin/_header'
-import style from '../signin/page.module.css'
 
 import cn from '@/utils/classnames'
 import { useGlobalPublicStore } from '@/context/global-public-context'
@@ -8,23 +7,12 @@ import { useGlobalPublicStore } from '@/context/global-public-context'
 export default function SignInLayout({ children }: any) {
   const { systemFeatures } = useGlobalPublicStore()
   return <>
-    <div className={cn(
-      style.background,
-      'flex w-full min-h-screen',
-      'sm:p-4 lg:p-8',
-      'gap-x-20',
-      'justify-center lg:justify-start',
-    )}>
-      <div className={
-        cn(
-          'flex w-full flex-col bg-white shadow rounded-2xl shrink-0',
-          'space-between',
-        )
-      }>
+    <div className={cn('flex min-h-screen w-full justify-center bg-background-default-burn p-6')}>
+      <div className={cn('flex w-full shrink-0 flex-col rounded-2xl border border-effects-highlight bg-background-default-subtle')}>
         <Header />
         <div className={
           cn(
-            'flex flex-col items-center w-full grow justify-center',
+            'flex w-full grow flex-col items-center justify-center',
             'px-6',
             'md:px-[108px]',
           )
@@ -33,7 +21,7 @@ export default function SignInLayout({ children }: any) {
             {children}
           </div>
         </div>
-        {!systemFeatures.branding.enabled && <div className='px-8 py-6 system-xs-regular text-text-tertiary'>
+        {!systemFeatures.branding.enabled && <div className='system-xs-regular px-8 py-6 text-text-tertiary'>
           © {new Date().getFullYear()} LangGenius, Inc. All rights reserved.
         </div>}
       </div>

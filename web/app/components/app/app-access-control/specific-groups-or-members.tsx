@@ -3,12 +3,10 @@ import { RiAlertFill, RiCloseCircleFill, RiLockLine, RiOrganizationChart } from 
 import { useTranslation } from 'react-i18next'
 import { useCallback, useEffect } from 'react'
 import Avatar from '../../base/avatar'
-import Divider from '../../base/divider'
 import Tooltip from '../../base/tooltip'
 import Loading from '../../base/loading'
 import useAccessControlStore from '../../../../context/access-control-store'
 import AddMemberOrGroupDialog from './add-member-or-group-pop'
-import { useGlobalPublicStore } from '@/context/global-public-context'
 import type { AccessControlAccount, AccessControlGroup } from '@/models/access-control'
 import { AccessMode } from '@/models/access-control'
 import { useAppWhiteListSubjects } from '@/service/access-control'
@@ -19,11 +17,6 @@ export default function SpecificGroupsOrMembers() {
   const setSpecificGroups = useAccessControlStore(s => s.setSpecificGroups)
   const setSpecificMembers = useAccessControlStore(s => s.setSpecificMembers)
   const { t } = useTranslation()
-  const systemFeatures = useGlobalPublicStore(s => s.systemFeatures)
-  const hideTip = systemFeatures.webapp_auth.enabled
-    && (systemFeatures.webapp_auth.allow_sso
-      || systemFeatures.webapp_auth.allow_email_password_login
-      || systemFeatures.webapp_auth.allow_email_code_login)
 
   const { isPending, data } = useAppWhiteListSubjects(appId, Boolean(appId) && currentMenu === AccessMode.SPECIFIC_GROUPS_MEMBERS)
   useEffect(() => {
@@ -33,30 +26,25 @@ export default function SpecificGroupsOrMembers() {
 
   if (currentMenu !== AccessMode.SPECIFIC_GROUPS_MEMBERS) {
     return <div className='flex items-center p-3'>
-      <div className='grow flex items-center gap-x-2'>
-        <RiLockLine className='w-4 h-4 text-text-primary' />
+      <div className='flex grow items-center gap-x-2'>
+        <RiLockLine className='h-4 w-4 text-text-primary' />
         <p className='system-sm-medium text-text-primary'>{t('app.accessControlDialog.accessItems.specific')}</p>
       </div>
-      {!hideTip && <WebAppSSONotEnabledTip />}
     </div>
   }
 
   return <div>
     <div className='flex items-center gap-x-1 p-3'>
-      <div className='grow flex items-center gap-x-1'>
-        <RiLockLine className='w-4 h-4 text-text-primary' />
+      <div className='flex grow items-center gap-x-1'>
+        <RiLockLine className='h-4 w-4 text-text-primary' />
         <p className='system-sm-medium text-text-primary'>{t('app.accessControlDialog.accessItems.specific')}</p>
       </div>
       <div className='flex items-center gap-x-1'>
-        {!hideTip && <>
-          <WebAppSSONotEnabledTip />
-          <Divider className='h-[14px] ml-2 mr-0' type="vertical" />
-        </>}
         <AddMemberOrGroupDialog />
       </div>
     </div>
     <div className='px-1 pb-1'>
-      <div className='bg-background-section rounded-lg p-2 flex flex-col gap-y-2 max-h-[400px] overflow-y-auto'>
+      <div className='flex max-h-[400px] flex-col gap-y-2 overflow-y-auto rounded-lg bg-background-section p-2'>
         {isPending ? <Loading /> : <RenderGroupsAndMembers />}
       </div>
     </div>
@@ -68,13 +56,13 @@ function RenderGroupsAndMembers() {
   const specificGroups = useAccessControlStore(s => s.specificGroups)
   const specificMembers = useAccessControlStore(s => s.specificMembers)
   if (specificGroups.length <= 0 && specificMembers.length <= 0)
-    return <div className='px-2 pt-5 pb-1.5'><p className='system-xs-regular text-text-tertiary text-center'>{t('app.accessControlDialog.noGroupsOrMembers')}</p></div>
+    return <div className='px-2 pb-1.5 pt-5'><p className='system-xs-regular text-center text-text-tertiary'>{t('app.accessControlDialog.noGroupsOrMembers')}</p></div>
   return <>
-    <p className='system-2xs-medium-uppercase text-text-tertiary sticky top-0'>{t('app.accessControlDialog.groups', { count: specificGroups.length ?? 0 })}</p>
+    <p className='system-2xs-medium-uppercase sticky top-0 text-text-tertiary'>{t('app.accessControlDialog.groups', { count: specificGroups.length ?? 0 })}</p>
     <div className='flex flex-row flex-wrap gap-1'>
       {specificGroups.map((group, index) => <GroupItem key={index} group={group} />)}
     </div>
-    <p className='system-2xs-medium-uppercase text-text-tertiary sticky top-0'>{t('app.accessControlDialog.members', { count: specificMembers.length ?? 0 })}</p>
+    <p className='system-2xs-medium-uppercase sticky top-0 text-text-tertiary'>{t('app.accessControlDialog.members', { count: specificMembers.length ?? 0 })}</p>
     <div className='flex flex-row flex-wrap gap-1'>
       {specificMembers.map((member, index) => <MemberItem key={index} member={member} />)}
     </div>
@@ -90,7 +78,7 @@ function GroupItem({ group }: GroupItemProps) {
   const handleRemoveGroup = useCallback(() => {
     setSpecificGroups(specificGroups.filter(g => g.id !== group.id))
   }, [group, setSpecificGroups, specificGroups])
-  return <BaseItem icon={<RiOrganizationChart className='w-[14px] h-[14px] text-components-avatar-shape-fill-stop-0' />}
+  return <BaseItem icon={<RiOrganizationChart className='h-[14px] w-[14px] text-components-avatar-shape-fill-stop-0' />}
     onRemove={handleRemoveGroup}>
     <p className='system-xs-regular text-text-primary'>{group.name}</p>
     <p className='system-xs-regular text-text-tertiary'>{group.groupSize}</p>
@@ -106,7 +94,7 @@ function MemberItem({ member }: MemberItemProps) {
   const handleRemoveMember = useCallback(() => {
     setSpecificMembers(specificMembers.filter(m => m.id !== member.id))
   }, [member, setSpecificMembers, specificMembers])
-  return <BaseItem icon={<Avatar className='w-[14px] h-[14px]' textClassName='text-[12px]' avatar={null} name={member.name} />}
+  return <BaseItem icon={<Avatar className='h-[14px] w-[14px]' textClassName='text-[12px]' avatar={null} name={member.name} />}
     onRemove={handleRemoveMember}>
     <p className='system-xs-regular text-text-primary'>{member.name}</p>
   </BaseItem>
@@ -118,15 +106,15 @@ type BaseItemProps = {
   onRemove?: () => void
 }
 function BaseItem({ icon, onRemove, children }: BaseItemProps) {
-  return <div className='rounded-full border-[0.5px] bg-components-badge-white-to-dark shadow-xs p-1 pr-1.5 group flex items-center flex-row gap-x-1'>
-    <div className='w-5 h-5 rounded-full bg-components-icon-bg-blue-solid overflow-hidden'>
-      <div className='w-full h-full flex items-center justify-center bg-access-app-icon-mask-bg'>
+  return <div className='group flex flex-row items-center gap-x-1 rounded-full border-[0.5px] bg-components-badge-white-to-dark p-1 pr-1.5 shadow-xs'>
+    <div className='h-5 w-5 overflow-hidden rounded-full bg-components-icon-bg-blue-solid'>
+      <div className='bg-access-app-icon-mask-bg flex h-full w-full items-center justify-center'>
         {icon}
       </div>
     </div>
     {children}
-    <div className='flex items-center justify-center w-4 h-4 cursor-pointer' onClick={onRemove}>
-      <RiCloseCircleFill className='w-[14px] h-[14px] text-text-quaternary' />
+    <div className='flex h-4 w-4 cursor-pointer items-center justify-center' onClick={onRemove}>
+      <RiCloseCircleFill className='h-[14px] w-[14px] text-text-quaternary' />
     </div>
   </div>
 }
@@ -134,6 +122,6 @@ function BaseItem({ icon, onRemove, children }: BaseItemProps) {
 export function WebAppSSONotEnabledTip() {
   const { t } = useTranslation()
   return <Tooltip asChild={false} popupContent={t('app.accessControlDialog.webAppSSONotEnabledTip')}>
-    <RiAlertFill className='w-4 h-4 text-text-warning-secondary shrink-0' />
+    <RiAlertFill className='h-4 w-4 shrink-0 text-text-warning-secondary' />
   </Tooltip>
 }
