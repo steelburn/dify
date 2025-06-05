@@ -13,7 +13,7 @@ import type { CommonNodeType, InputVar, ValueSelector, Var, Variable } from '@/a
 import { BlockEnum, InputVarType, NodeRunningStatus, VarType } from '@/app/components/workflow/types'
 import { useStore as useAppStore } from '@/app/components/app/store'
 import { useStore, useWorkflowStore } from '@/app/components/workflow/store'
-import { getIterationSingleNodeRunUrl, getLoopSingleNodeRunUrl, singleNodeRun } from '@/service/workflow'
+import { fetchNodeInspectVars, getIterationSingleNodeRunUrl, getLoopSingleNodeRunUrl, singleNodeRun } from '@/service/workflow'
 import Toast from '@/app/components/base/toast'
 import LLMDefault from '@/app/components/workflow/nodes/llm/default'
 import KnowledgeRetrievalDefault from '@/app/components/workflow/nodes/knowledge-retrieval/default'
@@ -32,7 +32,7 @@ import LoopDefault from '@/app/components/workflow/nodes/loop/default'
 import { ssePost } from '@/service/base'
 import { noop } from 'lodash-es'
 import { getInputVars as doGetInputVars } from '@/app/components/base/prompt-editor/constants'
-import type { NodeTracing } from '@/types/workflow'
+import type { NodeRunResult, NodeTracing } from '@/types/workflow'
 const { checkValid: checkLLMValid } = LLMDefault
 const { checkValid: checkKnowledgeRetrievalValid } = KnowledgeRetrievalDefault
 const { checkValid: checkIfElseValid } = IfElseDefault
@@ -47,7 +47,11 @@ const { checkValid: checkParameterExtractorValid } = ParameterExtractorDefault
 const { checkValid: checkIterationValid } = IterationDefault
 const { checkValid: checkDocumentExtractorValid } = DocumentExtractorDefault
 const { checkValid: checkLoopValid } = LoopDefault
-
+import {
+  useStoreApi,
+} from 'reactflow'
+import { useInvalidLastRun } from '@/service/use-workflow'
+import useInspectVarsCrud from '../../../hooks/use-inspect-vars-crud'
 // eslint-disable-next-line ts/no-unsafe-function-type
 const checkValidFns: Record<BlockEnum, Function> = {
   [BlockEnum.LLM]: checkLLMValid,
@@ -66,7 +70,7 @@ const checkValidFns: Record<BlockEnum, Function> = {
   [BlockEnum.Loop]: checkLoopValid,
 } as any
 
-type Params<T> = {
+export type Params<T> = {
   id: string
   data: CommonNodeType<T>
   defaultRunInputData: Record<string, any>
@@ -112,6 +116,7 @@ const useOneStepRun = <T>({
   const isChatMode = useIsChatMode()
   const isIteration = data.type === BlockEnum.Iteration
   const isLoop = data.type === BlockEnum.Loop
+  const isStartNode = data.type === BlockEnum.Start
 
   const availableNodes = getBeforeNodesInSameBranch(id)
   const availableNodesIncludeParent = getBeforeNodesInSameBranchIncludeParent(id)
@@ -150,9 +155,34 @@ const useOneStepRun = <T>({
     runInputDataRef.current = data
     setRunInputData(data)
   }, [])
-  const iterationTimes = iteratorInputKey ? runInputData[iteratorInputKey].length : 0
-  const loopTimes = loopInputKey ? runInputData[loopInputKey].length : 0
-  const [runResult, setRunResult] = useState<any>(null)
+  const iterationTimes = iteratorInputKey ? runInputData[iteratorInputKey]?.length : 0
+  const loopTimes = loopInputKey ? runInputData[loopInputKey]?.length : 0
+
+  const store = useStoreApi()
+  const workflowStore = useWorkflowStore()
+  const {
+    setShowSingleRunPanel,
+  } = workflowStore.getState()
+  const invalidLastRun = useInvalidLastRun(appId!, id)
+  const [runResult, doSetRunResult] = useState<NodeRunResult | null>(null)
+  const {
+    appendNodeInspectVars,
+    invalidateSysVarValues,
+    invalidateConversationVarValues,
+  } = useInspectVarsCrud()
+  const setRunResult = useCallback(async (data: NodeRunResult | null) => {
+    doSetRunResult(data)
+    if(data?.status === NodeRunningStatus.Succeeded) {
+      invalidLastRun()
+      const vars = await fetchNodeInspectVars(appId!, id)
+      const { getNodes } = store.getState()
+      const nodes = getNodes()
+      appendNodeInspectVars(id, vars, nodes)
+      if(isStartNode)
+        invalidateSysVarValues()
+      invalidateConversationVarValues() // loop, iteration, variable assigner node can update the conversation variables, but to simple the logic(some nodes may also can update in the future), all nodes refresh.
+    }
+  }, [invalidLastRun, appId, id, store, appendNodeInspectVars, isStartNode, invalidateSysVarValues, invalidateConversationVarValues])
 
   const { handleNodeDataUpdate }: { handleNodeDataUpdate: (data: any) => void } = useNodeDataUpdate()
   const [canShowSingleRun, setCanShowSingleRun] = useState(false)
@@ -186,10 +216,9 @@ const useOneStepRun = <T>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data._isSingleRun])
 
-  const workflowStore = useWorkflowStore()
   useEffect(() => {
-    workflowStore.getState().setShowSingleRunPanel(!!isShowSingleRun)
-  }, [isShowSingleRun, workflowStore])
+    setShowSingleRunPanel(!!isShowSingleRun)
+  }, [isShowSingleRun, setShowSingleRunPanel])
 
   const hideSingleRun = () => {
     handleNodeDataUpdate({
@@ -217,13 +246,29 @@ const useOneStepRun = <T>({
       id,
       data: {
         ...data,
+        _isSingleRun: false,
         _singleRunningStatus: NodeRunningStatus.Running,
       },
     })
     let res: any
+    let hasError = false
     try {
       if (!isIteration && !isLoop) {
-        res = await singleNodeRun(appId!, id, { inputs: submitData }) as any
+        const isStartNode = data.type === BlockEnum.Start
+        const postData: Record<string, any> = {}
+        if(isStartNode) {
+          const { '#sys.query#': query, '#sys.files#': files, ...inputs } = submitData
+          if(isChatMode)
+            postData.conversation_id = ''
+
+          postData.inputs = inputs
+          postData.query = query
+          postData.files = files || []
+        }
+        else {
+          postData.inputs = submitData
+        }
+        res = await singleNodeRun(appId!, id, postData) as any
       }
       else if (isIteration) {
         setIterationRunResult([])
@@ -239,6 +284,7 @@ const useOneStepRun = <T>({
                 id,
                 data: {
                   ...data,
+                  _isSingleRun: false,
                   _singleRunningStatus: NodeRunningStatus.Succeeded,
                 },
               })
@@ -315,6 +361,7 @@ const useOneStepRun = <T>({
                 id,
                 data: {
                   ...data,
+                  _isSingleRun: false,
                   _singleRunningStatus: NodeRunningStatus.Failed,
                 },
               })
@@ -336,6 +383,7 @@ const useOneStepRun = <T>({
                 id,
                 data: {
                   ...data,
+                  _isSingleRun: false,
                   _singleRunningStatus: NodeRunningStatus.Succeeded,
                 },
               })
@@ -413,6 +461,7 @@ const useOneStepRun = <T>({
                 id,
                 data: {
                   ...data,
+                  _isSingleRun: false,
                   _singleRunningStatus: NodeRunningStatus.Failed,
                 },
               })
@@ -425,11 +474,19 @@ const useOneStepRun = <T>({
     }
     catch (e: any) {
       console.error(e)
+      hasError = true
+      const result = res || {}
+      setRunResult({
+        ...result,
+        error: e.message,
+        status: NodeRunningStatus.Failed,
+      })
       if (!isIteration && !isLoop) {
         handleNodeDataUpdate({
           id,
           data: {
             ...data,
+            _isSingleRun: false,
             _singleRunningStatus: NodeRunningStatus.Failed,
           },
         })
@@ -437,7 +494,7 @@ const useOneStepRun = <T>({
       }
     }
     finally {
-      if (!isIteration && !isLoop) {
+      if (!isIteration && !isLoop && res) {
         setRunResult({
           ...res,
           total_tokens: res.execution_metadata?.total_tokens || 0,
@@ -445,11 +502,12 @@ const useOneStepRun = <T>({
         })
       }
     }
-    if (!isIteration && !isLoop) {
+    if (!isIteration && !isLoop && !hasError) {
       handleNodeDataUpdate({
         id,
         data: {
           ...data,
+          _isSingleRun: false,
           _singleRunningStatus: NodeRunningStatus.Succeeded,
         },
       })
@@ -521,11 +579,18 @@ const useOneStepRun = <T>({
     return varInputs
   }
 
+  const varSelectorsToVarInputs = (valueSelectors: ValueSelector[] | string[]): InputVar[] => {
+    return valueSelectors.filter(item => !!item).map((item) => {
+      return getInputVars([`{{#${typeof item === 'string' ? item : item.join('.')}#}}`])[0]
+    })
+  }
+
   return {
     isShowSingleRun,
     hideSingleRun,
     showSingleRun,
     toVarInputs,
+    varSelectorsToVarInputs,
     getInputVars,
     runningStatus,
     isCompleted,
