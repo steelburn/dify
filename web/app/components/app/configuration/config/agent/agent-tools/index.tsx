@@ -176,6 +176,7 @@ const AgentTools: FC = () => {
                   onSelect={handleSelectTool}
                   onSelectMultiple={handleSelectMultipleTool}
                   selectedTools={tools as unknown as ToolValue[]}
+                  canChooseMCPTool
                 />
               </>
             )}

@@ -43,7 +43,7 @@ export type AgentStrategyProps = {
   nodeOutputVars?: NodeOutPutVar[],
   availableNodes?: Node[],
   nodeId?: string
-  canChooseMCPTool?: boolean
+  canChooseMCPTool: boolean
 }
 
 type CustomSchema<Type, Field = {}> = Omit<CredentialFormSchema, 'type'> & { type: Type } & Field
@@ -63,6 +63,7 @@ export const AgentStrategy = memo((props: AgentStrategyProps) => {
   const {
     setControlPromptEditorRerenderKey,
   } = workflowStore.getState()
+
   const override: ComponentProps<typeof Form<CustomField>>['override'] = [
     [FormTypeEnum.textNumber, FormTypeEnum.textInput],
     (schema, props) => {
@@ -203,7 +204,7 @@ export const AgentStrategy = memo((props: AgentStrategyProps) => {
     }
   }
   return <div className='space-y-2'>
-    <AgentStrategySelector value={strategy} onChange={onStrategyChange} />
+    <AgentStrategySelector value={strategy} onChange={onStrategyChange} canChooseMCPTool={canChooseMCPTool} />
     {
       strategy
         ? <div>
@@ -223,6 +224,7 @@ export const AgentStrategy = memo((props: AgentStrategyProps) => {
             nodeId={nodeId}
             nodeOutputVars={nodeOutputVars || []}
             availableNodes={availableNodes || []}
+            canChooseMCPTool={canChooseMCPTool}
           />
         </div>
         : <ListEmpty
