@@ -1,11 +1,11 @@
-from controllers.common import fields
-from controllers.web import api
-from controllers.web.error import AppNotPublishedError, AppUnavailableError
-from controllers.web.wraps import WebApiResource
-from core.app.app_config.common.parameters_mapping import \
-    get_parameters_from_feature_dict
 from flask import request
 from flask_restful import Resource, marshal_with, reqparse  # type: ignore
+
+from controllers.common import fields
+from controllers.web import api
+from controllers.web.error import AppUnavailableError
+from controllers.web.wraps import WebApiResource
+from core.app.app_config.common.parameters_mapping import get_parameters_from_feature_dict
 from libs.passport import PassportService
 from models.model import App, AppMode
 from services.app_service import AppService
@@ -30,7 +30,7 @@ class AppParameterApi(WebApiResource):
         else:
             app_model_config = app_model.app_model_config
             if app_model_config is None:
-                raise AppNotPublishedError()
+                raise AppUnavailableError()
 
             features_dict = app_model_config.to_dict()
 
