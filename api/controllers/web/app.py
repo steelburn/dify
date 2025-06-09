@@ -1,5 +1,5 @@
 from flask import request
-from flask_restful import Resource, marshal_with, reqparse
+from flask_restful import Resource, marshal_with, reqparse  # type: ignore
 
 from controllers.common import fields
 from controllers.web import api
@@ -10,6 +10,7 @@ from libs.passport import PassportService
 from models.model import App, AppMode
 from services.app_service import AppService
 from services.enterprise.enterprise_service import EnterpriseService
+from services.feature_service import FeatureService
 from services.webapp_auth_service import WebAppAuthService
 
 
@@ -51,6 +52,10 @@ class AppAccessMode(Resource):
         parser.add_argument("appCode", type=str, required=False, location="args")
         args = parser.parse_args()
 
+        features = FeatureService.get_system_features()
+        if not features.webapp_auth.enabled:
+            return {"accessMode": "public"}
+
         app_id = args.get("appId")
         if args.get("appCode"):
             app_code = args["appCode"]
@@ -83,6 +88,10 @@ class AppWebAuthPermission(Resource):
             user_id = decoded.get("user_id", "visitor")
         except Exception as e:
             pass
+
+        features = FeatureService.get_system_features()
+        if not features.webapp_auth.enabled:
+            return {"result": True}
 
         parser = reqparse.RequestParser()
         parser.add_argument("appId", type=str, required=True, location="args")

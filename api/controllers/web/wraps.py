@@ -5,7 +5,7 @@ from flask import request
 from flask_restful import Resource
 from werkzeug.exceptions import BadRequest, NotFound, Unauthorized
 
-from controllers.web.error import WebAppAuthAccessDeniedError, WebAppAuthRequiredError
+from controllers.web.error import AppNotPublishedError, WebAppAuthAccessDeniedError, WebAppAuthRequiredError
 from extensions.ext_database import db
 from libs.passport import PassportService
 from models.model import App, EndUser, Site
@@ -54,8 +54,8 @@ def decode_jwt_token():
             raise NotFound()
         if not app_code or not site:
             raise BadRequest("Site URL is no longer valid.")
-        if app_model.enable_site is False:
-            raise BadRequest("Site is disabled.")
+        if app_model.enable_site is False or app_model.status != "normal":
+            raise AppNotPublishedError()
         end_user_id = decoded.get("end_user_id")
         end_user = db.session.query(EndUser).filter(EndUser.id == end_user_id).first()
         if not end_user:
@@ -78,6 +78,8 @@ def decode_jwt_token():
         return app_model, end_user
     except Unauthorized as e:
         if system_features.webapp_auth.enabled:
+            if not app_code:
+                raise Unauthorized("Please re-login to access the web app.")
             app_web_auth_enabled = (
                 EnterpriseService.WebAppAuth.get_app_access_mode_by_code(app_code=str(app_code)).access_mode != "public"
             )
