@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { SUPPORT_INSTALL_LOCAL_FILE_EXTENSIONS } from '@/config'
 import { noop } from 'lodash-es'
 import { useGlobalPublicStore } from '@/context/global-public-context'
+import Button from '@/app/components/base/button'
 
 type InstallMethod = {
   icon: React.FC<{ className?: string }>
@@ -94,7 +95,7 @@ const Empty = () => {
             />
             <div className='flex w-full flex-col gap-y-1'>
               {installMethods.map(({ icon: Icon, text, action }) => (
-                <div
+                <Button
                   key={action}
                   className='flex cursor-pointer items-center gap-x-1 rounded-lg border-[0.5px] bg-components-button-secondary-bg
                   px-3 py-2 shadow-xs shadow-shadow-shadow-3 hover:bg-state-base-hover'
@@ -109,7 +110,7 @@ const Empty = () => {
                 >
                   <Icon className='size-4' />
                   <span className='px-0.5'>{text}</span>
-                </div>
+                </Button>
               ))}
             </div>
           </div>
