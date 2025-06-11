@@ -327,7 +327,6 @@ class PluginService:
         response = manager.upload_pkg(
             tenant_id,
             pkg,
-            verify_signature,
             verify_signature=features.plugin_installation_permission.restrict_to_marketplace_only,
         )
         # check if the plugin is available to install
