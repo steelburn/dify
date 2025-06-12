@@ -43,7 +43,6 @@ const AgentPanel: FC<NodePanelProps<AgentNodeType>> = (props) => {
   const { t } = useTranslation()
 
   const resetEditor = useStore(s => s.setControlPromptEditorRerenderKey)
-  console.log(canChooseMCPTool)
   return <div className='my-2'>
     <Field
     required

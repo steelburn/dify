@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
 import {
   RiArrowLeftLine,
-  RiArrowRightUpLine,
 } from '@remixicon/react'
 import {
   PortalToFollowElem,
@@ -15,6 +14,7 @@ import {
 import ToolTrigger from '@/app/components/plugins/plugin-detail-panel/tool-selector/tool-trigger'
 import ToolItem from '@/app/components/plugins/plugin-detail-panel/tool-selector/tool-item'
 import ToolPicker from '@/app/components/workflow/block-selector/tool-picker'
+import ToolForm from '@/app/components/workflow/nodes/tool/components/tool-form'
 import Button from '@/app/components/base/button'
 import Indicator from '@/app/components/header/indicator'
 import ToolCredentialForm from '@/app/components/plugins/plugin-detail-panel/tool-selector/tool-credentials-form'
@@ -23,7 +23,6 @@ import Textarea from '@/app/components/base/textarea'
 import Divider from '@/app/components/base/divider'
 import TabSlider from '@/app/components/base/tab-slider-plain'
 import ReasoningConfigForm from '@/app/components/plugins/plugin-detail-panel/tool-selector/reasoning-config-form'
-import Form from '@/app/components/header/account-setting/model-provider-page/model-modal/Form'
 import { generateFormValue, getPlainValue, getStructureValue, toolParametersToFormSchemas } from '@/app/components/tools/utils/to-form-schema'
 
 import { useAppContext } from '@/context/app-context'
@@ -175,7 +174,6 @@ const ToolSelector: FC<Props> = ({
 
   const handleSettingsFormChange = (v: Record<string, any>) => {
     const newValue = getStructureValue(v)
-
     const toolValue = {
       ...value,
       settings: newValue,
@@ -401,24 +399,13 @@ const ToolSelector: FC<Props> = ({
                     {/* user settings form */}
                     {(currType === 'settings' || userSettingsOnly) && (
                       <div className='px-4 py-2'>
-                        <Form
+                        <ToolForm
+                          inPanel
+                          readOnly={false}
+                          nodeId={nodeId}
+                          schema={settingsFormSchemas as any}
                           value={getPlainValue(value?.settings || {})}
                           onChange={handleSettingsFormChange}
-                          formSchemas={settingsFormSchemas as any}
-                          isEditMode={true}
-                          showOnVariableMap={{}}
-                          validating={false}
-                          inputClassName='bg-components-input-bg-normal hover:bg-components-input-bg-hover'
-                          fieldMoreInfo={item => item.url
-                            ? (<a
-                              href={item.url}
-                              target='_blank' rel='noopener noreferrer'
-                              className='inline-flex items-center text-xs text-text-accent'
-                            >
-                              {t('tools.howToGet')}
-                              <RiArrowRightUpLine className='ml-1 h-3 w-3' />
-                            </a>)
-                            : null}
                         />
                       </div>
                     )}

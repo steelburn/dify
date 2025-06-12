@@ -118,7 +118,7 @@ const CardView: FC<ICardViewProps> = ({ appId, isInPanel, className }) => {
         isInPanel={isInPanel}
         onChangeStatus={onChangeApiStatus}
       />
-      {isInPanel && appDetail.mode === 'workflow' && (
+      {isInPanel && (
         <MCPServiceCard
           appInfo={appDetail}
         />
