@@ -13,7 +13,7 @@ import {
   validateJSONSchema,
 } from '@/app/components/workflow/variable-inspect/utils'
 import { useFeatures } from '@/app/components/base/features/hooks'
-import { getProcessedFiles } from '@/app/components/base/file-uploader/utils'
+import { getProcessedFiles, getProcessedFilesFromResponse } from '@/app/components/base/file-uploader/utils'
 import { JSON_SCHEMA_MAX_DEPTH } from '@/config'
 import { TransferMethod } from '@/types/app'
 import { FILE_EXTS } from '@/app/components/base/prompt-editor/constants'
@@ -35,9 +35,10 @@ const ValueContent = ({
   const errorMessageRef = useRef<HTMLDivElement>(null)
   const [editorHeight, setEditorHeight] = useState(0)
   const showTextEditor = currentVar.value_type === 'secret' || currentVar.value_type === 'string' || currentVar.value_type === 'number'
-  const showJSONEditor = currentVar.value_type === 'object' || currentVar.value_type === 'array[string]' || currentVar.value_type === 'array[number]' || currentVar.value_type === 'array[object]'
-  const showFileEditor = currentVar.value_type === 'file' || currentVar.value_type === 'array[file]'
-  const textEditorDisabled = currentVar.type === VarInInspectType.environment || (currentVar.type === VarInInspectType.system && currentVar.name !== 'query')
+  const isSysFiles = currentVar.type === VarInInspectType.system && currentVar.name === 'files'
+  const showJSONEditor = !isSysFiles && (currentVar.value_type === 'object' || currentVar.value_type === 'array[string]' || currentVar.value_type === 'array[number]' || currentVar.value_type === 'array[object]')
+  const showFileEditor = isSysFiles || currentVar.value_type === 'file' || currentVar.value_type === 'array[file]'
+  const textEditorDisabled = currentVar.type === VarInInspectType.environment || (currentVar.type === VarInInspectType.system && currentVar.name !== 'query' && currentVar.name !== 'files')
 
   const [value, setValue] = useState<any>()
   const [json, setJson] = useState('')
@@ -46,9 +47,9 @@ const ValueContent = ({
   const fileFeature = useFeatures(s => s.features.file)
   const [fileValue, setFileValue] = useState<any>(
     currentVar.value_type === 'array[file]'
-    ? currentVar.value || []
+    ? getProcessedFilesFromResponse(currentVar.value || [])
     : currentVar.value
-      ? [currentVar.value]
+      ? getProcessedFilesFromResponse([currentVar.value])
       : [],
   )
 
@@ -67,12 +68,16 @@ const ValueContent = ({
       setJson(currentVar.value ? JSON.stringify(currentVar.value, null, 2) : '')
 
     if (showFileEditor) {
-      setFileValue(currentVar.value_type === 'array[file]'
-        ? currentVar.value || []
+      console.log(getProcessedFilesFromResponse(currentVar.value || []))
+      setFileValue(
+        (currentVar.value_type === 'array[file]' || isSysFiles)
+        ? getProcessedFilesFromResponse(currentVar.value || [])
         : currentVar.value
-          ? [currentVar.value]
-          : [])
+          ? getProcessedFilesFromResponse([currentVar.value])
+          : [],
+        )
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVar.id, currentVar.value])
 
   const handleTextChange = (value: string) => {
@@ -141,7 +146,7 @@ const ValueContent = ({
       return
     if (currentVar.value_type === 'file')
       debounceValueChange(currentVar.id, value[0])
-    if (currentVar.value_type === 'array[file]')
+    if (currentVar.value_type === 'array[file]' || isSysFiles)
       debounceValueChange(currentVar.id, value)
   }
 
