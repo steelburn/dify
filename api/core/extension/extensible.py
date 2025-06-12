@@ -1,6 +1,5 @@
 import enum
 import importlib.util
-import inspect
 import json
 import logging
 import os
@@ -42,9 +41,6 @@ class Extensible:
         extensions = []
         position_map: dict[str, int] = {}
 
-        # get the path of the current class
-        current_path = os.path.abspath(inspect.getfile(cls))
-        current_dir_path = os.path.dirname(current_path)
         # Get the package name from the module path
         package_name = ".".join(cls.__module__.split(".")[:-1])
 

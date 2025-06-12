@@ -2,7 +2,7 @@ import logging
 from typing import Any, NoReturn
 
 from flask import Response
-from flask_restful import Resource, fields, inputs, marshal_with, reqparse
+from flask_restful import Resource, fields, inputs, marshal, marshal_with, reqparse
 from sqlalchemy.orm import Session
 from werkzeug.exceptions import Forbidden
 
@@ -275,7 +275,6 @@ class VariableApi(Resource):
 
 class VariableResetApi(Resource):
     @_api_prerequisite
-    @marshal_with(_WORKFLOW_DRAFT_VARIABLE_FIELDS)
     def put(self, app_model: App, variable_id: str):
         draft_var_srv = WorkflowDraftVariableService(
             session=db.session(),
@@ -293,19 +292,12 @@ class VariableResetApi(Resource):
         if variable.app_id != app_model.id:
             raise NotFoundError(description=f"variable not found, id={variable_id}")
 
-        if variable.node_id != CONVERSATION_VARIABLE_NODE_ID:
-            error_msg = "variable is not a conversation variable, id={}, node_id={},  name={}".format(
-                variable.id,
-                variable.node_id,
-                variable.name,
-            )
-            raise InvalidArgumentError(error_msg)
-        resetted = draft_var_srv.reset_conversation_variable(draft_workflow, variable)
+        resetted = draft_var_srv.reset_variable(draft_workflow, variable)
         db.session.commit()
         if resetted is None:
             return Response("", 204)
         else:
-            return variable
+            return marshal(resetted, _WORKFLOW_DRAFT_VARIABLE_FIELDS)
 
 
 def _get_variable_list(app_model: App, node_id) -> WorkflowDraftVariableList:
