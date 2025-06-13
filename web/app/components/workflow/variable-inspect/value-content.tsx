@@ -36,47 +36,42 @@ const ValueContent = ({
   const [editorHeight, setEditorHeight] = useState(0)
   const showTextEditor = currentVar.value_type === 'secret' || currentVar.value_type === 'string' || currentVar.value_type === 'number'
   const isSysFiles = currentVar.type === VarInInspectType.system && currentVar.name === 'files'
-  const showJSONEditor = !isSysFiles && (currentVar.value_type === 'object' || currentVar.value_type === 'array[string]' || currentVar.value_type === 'array[number]' || currentVar.value_type === 'array[object]')
+  const showJSONEditor = !isSysFiles && (currentVar.value_type === 'object' || currentVar.value_type === 'array[string]' || currentVar.value_type === 'array[number]' || currentVar.value_type === 'array[object]' || currentVar.value_type === 'array[any]')
   const showFileEditor = isSysFiles || currentVar.value_type === 'file' || currentVar.value_type === 'array[file]'
   const textEditorDisabled = currentVar.type === VarInInspectType.environment || (currentVar.type === VarInInspectType.system && currentVar.name !== 'query' && currentVar.name !== 'files')
+  const JSONEditorDisabled = currentVar.value_type === 'array[any]'
+
+  const formatFileValue = (value: VarInInspect) => {
+    if (value.value_type === 'file')
+      return value.value ? getProcessedFilesFromResponse([value.value]) : []
+    if (value.value_type === 'array[file]' || (value.type === VarInInspectType.system && currentVar.name === 'files'))
+      return value.value && value.value.length > 0 ? getProcessedFilesFromResponse(value.value) : []
+    return []
+  }
 
   const [value, setValue] = useState<any>()
   const [json, setJson] = useState('')
   const [parseError, setParseError] = useState<Error | null>(null)
   const [validationError, setValidationError] = useState<string>('')
   const fileFeature = useFeatures(s => s.features.file)
-  const [fileValue, setFileValue] = useState<any>(
-    currentVar.value_type === 'array[file]'
-    ? getProcessedFilesFromResponse(currentVar.value || [])
-    : currentVar.value
-      ? getProcessedFilesFromResponse([currentVar.value])
-      : [],
-  )
+  const [fileValue, setFileValue] = useState<any>(formatFileValue(currentVar))
 
   const { run: debounceValueChange } = useDebounceFn(handleValueChange, { wait: 500 })
 
   // update default value when id changed
   useEffect(() => {
     if (showTextEditor) {
-      if (!currentVar.value)
-        return setValue('')
       if (currentVar.value_type === 'number')
         return setValue(JSON.stringify(currentVar.value))
+      if (!currentVar.value)
+        return setValue('')
       setValue(currentVar.value)
     }
     if (showJSONEditor)
       setJson(currentVar.value ? JSON.stringify(currentVar.value, null, 2) : '')
 
-    if (showFileEditor) {
-      console.log(getProcessedFilesFromResponse(currentVar.value || []))
-      setFileValue(
-        (currentVar.value_type === 'array[file]' || isSysFiles)
-        ? getProcessedFilesFromResponse(currentVar.value || [])
-        : currentVar.value
-          ? getProcessedFilesFromResponse([currentVar.value])
-          : [],
-        )
-    }
+    if (showFileEditor)
+      setFileValue(formatFileValue(currentVar))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVar.id, currentVar.value])
 
@@ -86,9 +81,10 @@ const ValueContent = ({
 
     if (currentVar.value_type === 'number') {
       if (/^-?\d+(\.)?(\d+)?$/.test(value))
-        setValue(value)
+        setValue(Number.parseFloat(value))
     }
-    debounceValueChange(currentVar.id, value)
+    const newValue = currentVar.value_type === 'number' ? Number.parseFloat(value) : value
+    debounceValueChange(currentVar.id, newValue)
   }
 
   const jsonValueValidate = (value: string, type: string) => {
@@ -184,6 +180,7 @@ const ValueContent = ({
         )}
         {showJSONEditor && (
           <SchemaEditor
+            readonly={JSONEditorDisabled}
             className='overflow-y-auto'
             hideTopMenu
             schema={json}

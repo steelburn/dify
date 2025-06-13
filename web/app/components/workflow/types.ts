@@ -262,6 +262,7 @@ export enum VarType {
   arrayObject = 'array[object]',
   arrayFile = 'array[file]',
   any = 'any',
+  arrayAny = 'array[any]',
 }
 
 export enum ValueType {
