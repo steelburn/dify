@@ -38,7 +38,7 @@ const LastRun: FC<Props> = ({
   const noLastRun = (error as any)?.status === 404
   const runResult = (canRunLastRun ? lastRunResult : singleRunResult) || {}
 
-  if (isFetching) {
+  if (isFetching && !runResult) {
     return (
       <div className='flex h-0 grow flex-col items-center justify-center'>
         <RiLoader2Line className='size-4 animate-spin text-text-tertiary' />
@@ -58,6 +58,8 @@ const LastRun: FC<Props> = ({
       <ResultPanel
         {...runResult as any}
         {...otherResultPanelProps}
+        total_tokens={(runResult as any)?.execution_metadata?.total_tokens || otherResultPanelProps?.total_tokens}
+        created_by={(runResult as any)?.created_by_account?.created_by || otherResultPanelProps?.created_by}
         nodeInfo={nodeInfo}
         showSteps={false}
       />
