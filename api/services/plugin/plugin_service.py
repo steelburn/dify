@@ -336,6 +336,15 @@ class PluginService:
 
     @staticmethod
     def install_from_local_pkg(tenant_id: str, plugin_unique_identifiers: Sequence[str]):
+        pkg = download_plugin_pkg(plugin_unique_identifier)
+        response = manager.upload_pkg(
+            tenant_id,
+            pkg,
+            verify_signature=features.plugin_installation_permission.restrict_to_marketplace_only,
+        )
+        # check if the plugin is available to install
+        PluginService._check_plugin_installation_availability(response.verification)
+
         manager = PluginInstaller()
         return manager.install_from_identifiers(
             tenant_id,
@@ -350,6 +359,15 @@ class PluginService:
         Install plugin from github release package files,
         returns plugin_unique_identifier
         """
+        pkg = download_plugin_pkg(plugin_unique_identifier)
+        response = manager.upload_pkg(
+            tenant_id,
+            pkg,
+            verify_signature=features.plugin_installation_permission.restrict_to_marketplace_only,
+        )
+        # check if the plugin is available to install
+        PluginService._check_plugin_installation_availability(response.verification)
+
         manager = PluginInstaller()
         return manager.install_from_identifiers(
             tenant_id,
@@ -418,6 +436,15 @@ class PluginService:
                 )
                 # check if the plugin is available to install
                 PluginService._check_plugin_installation_availability(response.verification)
+
+        pkg = download_plugin_pkg(plugin_unique_identifier)
+        response = manager.upload_pkg(
+            tenant_id,
+            pkg,
+            verify_signature=features.plugin_installation_permission.restrict_to_marketplace_only,
+        )
+        # check if the plugin is available to install
+        PluginService._check_plugin_installation_availability(response.verification)
 
         return manager.install_from_identifiers(
             tenant_id,
