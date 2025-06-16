@@ -188,6 +188,11 @@ class PluginInstallFromPkgApi(Resource):
                 raise ValueError("Invalid plugin unique identifier")
 
         try:
+            PluginService.upload_pkg(tenant_id, content)
+        except PluginDaemonClientSideError as e:
+            raise ValueError(e)
+
+        try:
             response = PluginService.install_from_local_pkg(tenant_id, args["plugin_unique_identifiers"])
         except PluginDaemonClientSideError as e:
             raise ValueError(e)
@@ -209,6 +214,11 @@ class PluginInstallFromGithubApi(Resource):
         parser.add_argument("package", type=str, required=True, location="json")
         parser.add_argument("plugin_unique_identifier", type=str, required=True, location="json")
         args = parser.parse_args()
+
+        try:
+            PluginService.upload_pkg_from_github(tenant_id, args["repo"], args["version"], args["package"])
+        except PluginDaemonClientSideError as e:
+            raise ValueError(e)
 
         try:
             response = PluginService.install_from_github(
