@@ -21,7 +21,7 @@ from core.workflow.enums import SystemVariableKey
 from core.workflow.nodes import NodeType
 from core.workflow.nodes.variable_assigner.common.helpers import get_updated_variables
 from core.workflow.variable_loader import VariableLoader
-from factories.variable_factory import build_segment, segment_to_variable
+from factories.variable_factory import build_segment, build_segment_with_type, segment_to_variable
 from models import App, Conversation
 from models.enums import DraftVariableType
 from models.workflow import Workflow, WorkflowDraftVariable, WorkflowNodeExecutionModel, is_system_variable_editable
@@ -35,7 +35,15 @@ class WorkflowDraftVariableList:
     total: int | None = None
 
 
-class VariableResetError(Exception):
+class WorkflowDraftVariableError(Exception):
+    pass
+
+
+class VariableResetError(WorkflowDraftVariableError):
+    pass
+
+
+class UpdateNotSupportedError(WorkflowDraftVariableError):
     pass
 
 
@@ -199,6 +207,8 @@ class WorkflowDraftVariableService:
         name: str | None = None,
         value: Segment | None = None,
     ) -> WorkflowDraftVariable:
+        if not variable.editable:
+            raise UpdateNotSupportedError(f"variable not support updating, id={variable.id}")
         if name is not None:
             variable.set_name(name)
         if value is not None:
@@ -208,6 +218,9 @@ class WorkflowDraftVariableService:
         return variable
 
     def _reset_conv_var(self, workflow: Workflow, variable: WorkflowDraftVariable) -> WorkflowDraftVariable | None:
+        # If a variable does not allow updating, it makes no sence to resetting it.
+        if not variable.editable:
+            return variable
         conv_var_by_name = {i.name: i for i in workflow.conversation_variables}
         conv_var = conv_var_by_name.get(variable.name)
 
@@ -250,23 +263,29 @@ class WorkflowDraftVariableService:
         node_config = workflow.get_node_config_by_id(variable.node_id)
         node_type = workflow.get_node_type_from_node_config(node_config)
 
-        # Extract variable value using unified logic
-        old_value = DraftVariableSaver.extract_variable_value_from_execution_data(
-            node_exec,
-            variable.name,
-            node_type,
-        )
+        outputs_dict = node_exec.outputs_dict or {}
 
-        if old_value is not None:
-            variable.set_value(old_value)
-            variable.last_edited_at = None  # Reset to indicate this is a reset operation
-            self._session.flush()
+        # Note: Based on the implementation in `_build_from_variable_assigner_mapping`,
+        # VariableAssignerNode (both v1 and v2) can only create conversation draft variables.
+        # For consistency, we should simply return when processing VARIABLE_ASSIGNER nodes.
+        #
+        # This implementation must remain synchronized with the `_build_from_variable_assigner_mapping`
+        # and `save` methods.
+        if node_type == NodeType.VARIABLE_ASSIGNER:
             return variable
-        else:
+
+        if variable.name not in outputs_dict:
             # If variable not found in execution data, delete the variable
             self._session.delete(instance=variable)
             self._session.flush()
             return None
+        value = outputs_dict[variable.name]
+        value_seg = build_segment_with_type(variable.value_type, _rebuild_file_types_from_dict(value))
+        # Extract variable value using unified logic
+        variable.set_value(value_seg)
+        variable.last_edited_at = None  # Reset to indicate this is a reset operation
+        self._session.flush()
+        return variable
 
     def reset_variable(self, workflow: Workflow, variable: WorkflowDraftVariable) -> WorkflowDraftVariable | None:
         variable_type = variable.get_variable_type()
@@ -503,6 +522,7 @@ class DraftVariableSaver:
     # that aren't meant to be directly edited or viewed by users.
     _EXCLUDE_VARIABLE_NAMES_MAPPING: dict[NodeType, frozenset[str]] = {
         NodeType.LLM: frozenset(["finish_reason"]),
+        NodeType.LOOP: frozenset(["loop_round"]),
     }
 
     # Database session used for persisting draft variables.
@@ -551,6 +571,17 @@ class DraftVariableSaver:
         self._node_execution_id = node_execution_id
         self._enclosing_node_id = enclosing_node_id
 
+    def _create_dummy_output_variable(self):
+        return WorkflowDraftVariable.new_node_variable(
+            app_id=self._app_id,
+            node_id=self._node_id,
+            name=self._DUMMY_OUTPUT_IDENTITY,
+            node_execution_id=self._node_execution_id,
+            value=_build_segment_for_value(self._DUMMY_OUTPUT_VALUE),
+            visible=False,
+            editable=False,
+        )
+
     def _should_save_output_variables_for_draft(self) -> bool:
         # Only save output variables for debugging execution of workflow.
         if self._invoke_from != InvokeFrom.DEBUGGER:
@@ -581,6 +612,8 @@ class DraftVariableSaver:
                     value=segment,
                 )
             )
+        # Add a dummy output variable to indicate that this node is executed.
+        draft_vars.append(self._create_dummy_output_variable())
         return draft_vars
 
     def _build_variables_from_start_mapping(self, output: Mapping[str, Any]) -> list[WorkflowDraftVariable]:
@@ -624,17 +657,7 @@ class DraftVariableSaver:
                     )
                 )
         if not has_non_sys_variables:
-            draft_vars.append(
-                WorkflowDraftVariable.new_node_variable(
-                    app_id=self._app_id,
-                    node_id=self._node_id,
-                    name=self._DUMMY_OUTPUT_IDENTITY,
-                    node_execution_id=self._node_execution_id,
-                    value=_build_segment_for_value(self._DUMMY_OUTPUT_VALUE),
-                    visible=False,
-                    editable=False,
-                )
-            )
+            draft_vars.append(self._create_dummy_output_variable())
         return draft_vars
 
     def _normalize_variable_for_start_node(self, name: str) -> tuple[str, str]:
@@ -686,35 +709,6 @@ class DraftVariableSaver:
         else:
             draft_vars = self._build_variables_from_mapping(outputs)
         _batch_upsert_draft_varaible(self._session, draft_vars)
-
-    @staticmethod
-    def extract_variable_value_from_execution_data(
-        node_exec: "WorkflowNodeExecutionModel", variable_name: str, node_type: NodeType
-    ) -> Segment | None:
-        """
-        Extract variable value from execution data using unified logic.
-
-        Args:
-            node_exec: Workflow node execution record
-            variable_name: Name of the variable to extract
-            node_type: Type of the workflow node
-
-        Returns:
-            Raw variable value if found, None otherwise
-        """
-        outputs_dict = node_exec.outputs_dict or {}
-
-        # Note: Based on the implementation in `_build_from_variable_assigner_mapping`,
-        # VariableAssignerNode (both v1 and v2) can only create conversation draft variables.
-        # For consistency, we should simply return when processing VARIABLE_ASSIGNER nodes.
-        #
-        # This implementation must remain synchronized with the `_build_from_variable_assigner_mapping`
-        # and `save` methods.
-
-        if variable_name not in outputs_dict:
-            return None
-        value = outputs_dict[variable_name]
-        return _build_segment_for_value(value)
 
     @staticmethod
     def _should_variable_be_editable(node_id: str, name: str) -> bool:
