@@ -660,6 +660,8 @@ const translation = {
       authorize: 'Authorize',
       inputVars: 'Input Variables',
       settings: 'Settings',
+      insertPlaceholder1: 'Type or press',
+      insertPlaceholder2: 'insert variable',
       outputVars: {
         text: 'tool generated content',
         files: {
