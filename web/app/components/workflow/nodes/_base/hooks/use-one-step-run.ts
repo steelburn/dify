@@ -173,8 +173,12 @@ const useOneStepRun = <T>({
     invalidateConversationVarValues,
   } = useInspectVarsCrud()
   const runningStatus = data._singleRunningStatus || NodeRunningStatus.NotStart
-
+  const isPaused = !data._isSingleRun
   const setRunResult = useCallback(async (data: NodeRunResult | null) => {
+    // The backend don't support pause the single run, so the frontend handle the pause state.
+    if(isPaused)
+      return
+
     const canRunLastRun = !isRunAfterSingleRun || runningStatus === NodeRunningStatus.Succeeded
     if(!canRunLastRun) {
       doSetRunResult(data)
@@ -192,9 +196,18 @@ const useOneStepRun = <T>({
         invalidateSysVarValues()
       invalidateConversationVarValues() // loop, iteration, variable assigner node can update the conversation variables, but to simple the logic(some nodes may also can update in the future), all nodes refresh.
     }
-  }, [isRunAfterSingleRun, runningStatus, appId, id, store, appendNodeInspectVars, invalidLastRun, isStartNode, invalidateSysVarValues, invalidateConversationVarValues])
+  }, [isPaused, isRunAfterSingleRun, runningStatus, appId, id, store, appendNodeInspectVars, invalidLastRun, isStartNode, invalidateSysVarValues, invalidateConversationVarValues])
 
   const { handleNodeDataUpdate }: { handleNodeDataUpdate: (data: any) => void } = useNodeDataUpdate()
+  const setNodeRunning = () => {
+    handleNodeDataUpdate({
+      id,
+      data: {
+        ...data,
+        _singleRunningStatus: NodeRunningStatus.Running,
+      },
+    })
+  }
   const [canShowSingleRun, setCanShowSingleRun] = useState(false)
   const isShowSingleRun = data._isSingleRun && canShowSingleRun
   const [iterationRunResult, setIterationRunResult] = useState<NodeTracing[]>([])
@@ -245,6 +258,7 @@ const useOneStepRun = <T>({
       data: {
         ...data,
         _isSingleRun: true,
+        _singleRunningStatus: NodeRunningStatus.Running,
       },
     })
   }
@@ -611,6 +625,7 @@ const useOneStepRun = <T>({
     runResult,
     iterationRunResult,
     loopRunResult,
+    setNodeRunning,
   }
 }
 
