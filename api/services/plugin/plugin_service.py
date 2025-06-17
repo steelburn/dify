@@ -17,7 +17,12 @@ from core.plugin.entities.plugin import (
     PluginInstallation,
     PluginInstallationSource,
 )
-from core.plugin.entities.plugin_daemon import PluginInstallTask, PluginListResponse, PluginUploadResponse, PluginVerification
+from core.plugin.entities.plugin_daemon import (
+    PluginDecodeResponse,
+    PluginInstallTask,
+    PluginListResponse,
+    PluginVerification,
+)
 from core.plugin.impl.asset import PluginAssetManager
 from core.plugin.impl.debugging import PluginDebuggingClient
 from core.plugin.impl.plugin import PluginInstaller
@@ -293,7 +298,7 @@ class PluginService:
         )
 
     @staticmethod
-    def upload_pkg(tenant_id: str, pkg: bytes, verify_signature: bool = False) -> PluginUploadResponse:
+    def upload_pkg(tenant_id: str, pkg: bytes, verify_signature: bool = False) -> PluginDecodeResponse:
         """
         Upload plugin package files
 
@@ -313,7 +318,7 @@ class PluginService:
     @staticmethod
     def upload_pkg_from_github(
         tenant_id: str, repo: str, version: str, package: str, verify_signature: bool = False
-    ) -> PluginUploadResponse:
+    ) -> PluginDecodeResponse:
         """
         Install plugin from github release package files,
         returns plugin_unique_identifier
@@ -346,6 +351,10 @@ class PluginService:
     @staticmethod
     def install_from_local_pkg(tenant_id: str, plugin_unique_identifiers: Sequence[str]):
         manager = PluginInstaller()
+        for plugin_unique_identifier in plugin_unique_identifiers:
+            resp = manager.decode_plugin_from_identifier(tenant_id, plugin_unique_identifier)
+            PluginService._check_plugin_installation_availability(resp.verification)
+
         return manager.install_from_identifiers(
             tenant_id,
             plugin_unique_identifiers,
@@ -360,6 +369,8 @@ class PluginService:
         returns plugin_unique_identifier
         """
         manager = PluginInstaller()
+        plugin_decode_response = manager.decode_plugin_from_identifier(tenant_id, plugin_unique_identifier)
+        PluginService._check_plugin_installation_availability(plugin_decode_response.verification)
         return manager.install_from_identifiers(
             tenant_id,
             [plugin_unique_identifier],
@@ -416,6 +427,9 @@ class PluginService:
         for plugin_unique_identifier in plugin_unique_identifiers:
             try:
                 manager.fetch_plugin_manifest(tenant_id, plugin_unique_identifier)
+                plugin_decode_response = manager.decode_plugin_from_identifier(tenant_id, plugin_unique_identifier)
+                # check if the plugin is available to install
+                PluginService._check_plugin_installation_availability(plugin_decode_response.verification)
                 # already downloaded, skip
             except Exception:
                 # plugin not installed, download and upload pkg
@@ -427,15 +441,6 @@ class PluginService:
                 )
                 # check if the plugin is available to install
                 PluginService._check_plugin_installation_availability(response.verification)
-
-        pkg = download_plugin_pkg(plugin_unique_identifier)
-        response = manager.upload_pkg(
-            tenant_id,
-            pkg,
-            verify_signature=features.plugin_installation_permission.restrict_to_marketplace_only,
-        )
-        # check if the plugin is available to install
-        PluginService._check_plugin_installation_availability(response.verification)
 
         return manager.install_from_identifiers(
             tenant_id,
