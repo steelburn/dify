@@ -215,11 +215,6 @@ class PluginInstallFromGithubApi(Resource):
         args = parser.parse_args()
 
         try:
-            PluginService.upload_pkg_from_github(tenant_id, args["repo"], args["version"], args["package"])
-        except PluginDaemonClientSideError as e:
-            raise ValueError(e)
-
-        try:
             response = PluginService.install_from_github(
                 tenant_id,
                 args["plugin_unique_identifier"],
