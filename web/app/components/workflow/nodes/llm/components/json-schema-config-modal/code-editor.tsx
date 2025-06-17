@@ -30,8 +30,8 @@ const CodeEditor: FC<CodeEditorProps> = ({
   const { theme } = useTheme()
   const monacoRef = useRef<any>(null)
   const editorRef = useRef<any>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
   const [isMounted, setIsMounted] = React.useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (monacoRef.current) {
