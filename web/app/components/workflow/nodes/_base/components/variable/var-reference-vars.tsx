@@ -263,6 +263,7 @@ type Props = {
   onClose?: () => void
   onBlur?: () => void
   zIndex?: number
+  autoFocus?: boolean
 }
 const VarReferenceVars: FC<Props> = ({
   hideSearch,
@@ -275,6 +276,7 @@ const VarReferenceVars: FC<Props> = ({
   onClose,
   onBlur,
   zIndex,
+  autoFocus = true,
 }) => {
   const { t } = useTranslation()
   const [searchText, setSearchText] = useState('')
@@ -327,7 +329,7 @@ const VarReferenceVars: FC<Props> = ({
                 onKeyDown={handleKeyDown}
                 onClear={() => setSearchText('')}
                 onBlur={onBlur}
-                autoFocus
+                autoFocus={autoFocus}
               />
             </div>
             <div className='relative left-[-4px] h-[0.5px] bg-black/5' style={{

@@ -63,7 +63,7 @@ export const useShortcuts = (): void => {
     return !showFeaturesPanel && !isEventTargetInputArea(e.target as HTMLElement)
   }, [workflowStore])
 
-  useKeyPress(['delete', 'backspace'], (e) => {
+  useKeyPress(['delete'], (e) => {
     if (shouldHandleShortcut(e)) {
       e.preventDefault()
       handleNodesDelete()
