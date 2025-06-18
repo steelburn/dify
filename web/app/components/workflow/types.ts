@@ -202,6 +202,7 @@ export type InputVar = {
   value_selector?: ValueSelector
   getVarValueFromDependent?: boolean
   hide?: boolean
+  isFileItem?: boolean
 } & Partial<UploadFileSetting>
 
 export type ModelConfig = {
