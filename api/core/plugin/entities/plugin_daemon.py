@@ -174,6 +174,7 @@ class PluginDecodeResponse(BaseModel):
     manifest: PluginDeclaration
     verification: Optional[PluginVerification] = Field(default=None, description="Basic verification information")
 
+
 class PluginOAuthAuthorizationUrlResponse(BaseModel):
     authorization_url: str = Field(description="The URL of the authorization.")
 

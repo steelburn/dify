@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ReactEcharts from 'echarts-for-react'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 import {
@@ -62,6 +62,17 @@ const getCorrectCapitalizationLanguageName = (language: string) => {
 // visit https://reactjs.org/docs/error-decoder.html?invariant=185 for the full message
 // or use the non-minified dev environment for full errors and additional helpful warnings.
 
+// Define ECharts event parameter types
+type EChartsEventParams = {
+  type: string;
+  seriesIndex?: number;
+  dataIndex?: number;
+  name?: string;
+  value?: any;
+  currentIndex?: number; // Added for timeline events
+  [key: string]: any;
+}
+
 const CodeBlock: any = memo(({ inline, className, children = '', ...props }: any) => {
   const { theme } = useTheme()
   const [isSVG, setIsSVG] = useState(true)
@@ -70,33 +81,84 @@ const CodeBlock: any = memo(({ inline, className, children = '', ...props }: any
   const echartsRef = useRef<any>(null)
   const contentRef = useRef<string>('')
   const processedRef = useRef<boolean>(false) // Track if content was successfully processed
+  const instanceIdRef = useRef<string>(`chart-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`) // Unique ID for logging
+  const isInitialRenderRef = useRef<boolean>(true) // Track if this is initial render
+  const chartInstanceRef = useRef<any>(null) // Direct reference to ECharts instance
+  const resizeTimerRef = useRef<NodeJS.Timeout | null>(null) // For debounce handling
+  const finishedEventCountRef = useRef<number>(0) // Track finished event trigger count
   const match = /language-(\w+)/.exec(className || '')
   const language = match?.[1]
   const languageShowName = getCorrectCapitalizationLanguageName(language || '')
   const isDarkMode = theme === Theme.dark
 
+  const echartsStyle = useMemo(() => ({
+    height: '350px',
+    width: '100%',
+  }), [])
+
+  const echartsOpts = useMemo(() => ({
+    renderer: 'canvas',
+    width: 'auto',
+  }) as any, [])
+
+  // Debounce resize operations
+  const debouncedResize = useCallback(() => {
+    if (resizeTimerRef.current)
+      clearTimeout(resizeTimerRef.current)
+
+    resizeTimerRef.current = setTimeout(() => {
+      if (chartInstanceRef.current)
+        chartInstanceRef.current.resize()
+      resizeTimerRef.current = null
+    }, 200)
+  }, [])
+
+  // Handle ECharts instance initialization
+  const handleChartReady = useCallback((instance: any) => {
+    chartInstanceRef.current = instance
+
+    // Force resize to ensure timeline displays correctly
+    setTimeout(() => {
+      if (chartInstanceRef.current)
+        chartInstanceRef.current.resize()
+    }, 200)
+  }, [])
+
+  // Store event handlers in useMemo to avoid recreating them
+  const echartsEvents = useMemo(() => ({
+    finished: (params: EChartsEventParams) => {
+      // Limit finished event frequency to avoid infinite loops
+      finishedEventCountRef.current++
+      if (finishedEventCountRef.current > 3) {
+        // Stop processing after 3 times to avoid infinite loops
+        return
+      }
+
+      if (chartInstanceRef.current) {
+        // Use debounced resize
+        debouncedResize()
+      }
+    },
+  }), [debouncedResize])
+
   // Handle container resize for echarts
   useEffect(() => {
-    if (language !== 'echarts' || !echartsRef.current) return
+    if (language !== 'echarts' || !chartInstanceRef.current) return
 
     const handleResize = () => {
-      // This gets the echarts instance from the component
-      const instance = echartsRef.current?.getEchartsInstance?.()
-      if (instance)
-        instance.resize()
+      if (chartInstanceRef.current)
+        // Use debounced resize
+        debouncedResize()
     }
 
     window.addEventListener('resize', handleResize)
 
-    // Also manually trigger resize after a short delay to ensure proper sizing
-    const resizeTimer = setTimeout(handleResize, 200)
-
     return () => {
       window.removeEventListener('resize', handleResize)
-      clearTimeout(resizeTimer)
+      if (resizeTimerRef.current)
+        clearTimeout(resizeTimerRef.current)
     }
-  }, [language, echartsRef.current])
-
+  }, [language, debouncedResize])
   // Process chart data when content changes
   useEffect(() => {
     // Only process echarts content
@@ -204,6 +266,7 @@ const CodeBlock: any = memo(({ inline, className, children = '', ...props }: any
     }
   }, [language, children])
 
+  // Cache rendered content to avoid unnecessary re-renders
   const renderCodeContent = useMemo(() => {
     const content = String(children).replace(/\n$/, '')
     switch (language) {
@@ -256,6 +319,9 @@ const CodeBlock: any = memo(({ inline, className, children = '', ...props }: any
 
         // Success state: show the chart
         if (chartState === 'success' && finalChartOption) {
+          // Reset finished event counter
+          finishedEventCountRef.current = 0
+
           return (
             <div style={{
               minWidth: '300px',
@@ -268,26 +334,23 @@ const CodeBlock: any = memo(({ inline, className, children = '', ...props }: any
             }}>
               <ErrorBoundary>
                 <ReactEcharts
-                  ref={echartsRef}
+                  ref={(e) => {
+                    if (e && isInitialRenderRef.current) {
+                      echartsRef.current = e
+                      isInitialRenderRef.current = false
+                    }
+                  }}
                   option={finalChartOption}
                   style={{
                     height: '350px',
                     width: '100%',
                   }}
                   theme={isDarkMode ? 'dark' : undefined}
-                  opts={{
-                    renderer: 'canvas',
-                    width: 'auto',
-                  }}
-                  notMerge={true}
-                  onEvents={{
-                    // Force resize when chart is finished rendering
-                    finished: () => {
-                      const instance = echartsRef.current?.getEchartsInstance?.()
-                      if (instance)
-                        instance.resize()
-                    },
-                  }}
+                  opts={echartsOpts}
+                  notMerge={false}
+                  lazyUpdate={false}
+                  onEvents={echartsEvents}
+                  onChartReady={handleChartReady}
                 />
               </ErrorBoundary>
             </div>
@@ -364,7 +427,7 @@ const CodeBlock: any = memo(({ inline, className, children = '', ...props }: any
           </SyntaxHighlighter>
         )
     }
-  }, [children, language, isSVG, finalChartOption, props, theme, match])
+  }, [children, language, isSVG, finalChartOption, props, theme, match, chartState, isDarkMode, echartsStyle, echartsOpts, handleChartReady, echartsEvents])
 
   if (inline || !match)
     return <code {...props} className={className}>{children}</code>

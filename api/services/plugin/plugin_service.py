@@ -128,6 +128,42 @@ class PluginService:
                 pass
 
     @staticmethod
+    def _check_marketplace_only_permission():
+        """
+        Check if the marketplace only permission is enabled
+        """
+        features = FeatureService.get_system_features()
+        if features.plugin_installation_permission.restrict_to_marketplace_only:
+            raise PluginInstallationForbiddenError("Plugin installation is restricted to marketplace only")
+
+    @staticmethod
+    def _check_plugin_installation_scope(plugin_verification: Optional[PluginVerification]):
+        """
+        Check the plugin installation scope
+        """
+        features = FeatureService.get_system_features()
+
+        match features.plugin_installation_permission.plugin_installation_scope:
+            case PluginInstallationScope.OFFICIAL_ONLY:
+                if (
+                    plugin_verification is None
+                    or plugin_verification.authorized_category != PluginVerification.AuthorizedCategory.Langgenius
+                ):
+                    raise PluginInstallationForbiddenError("Plugin installation is restricted to official only")
+            case PluginInstallationScope.OFFICIAL_AND_SPECIFIC_PARTNERS:
+                if plugin_verification is None or plugin_verification.authorized_category not in [
+                    PluginVerification.AuthorizedCategory.Langgenius,
+                    PluginVerification.AuthorizedCategory.Partner,
+                ]:
+                    raise PluginInstallationForbiddenError(
+                        "Plugin installation is restricted to official and specific partners"
+                    )
+            case PluginInstallationScope.NONE:
+                raise PluginInstallationForbiddenError("Installing plugins is not allowed")
+            case PluginInstallationScope.ALL:
+                pass
+
+    @staticmethod
     def get_debugging_key(tenant_id: str) -> str:
         """
         get the debugging key of the tenant
