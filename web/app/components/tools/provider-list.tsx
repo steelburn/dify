@@ -20,11 +20,13 @@ import MCPList from './mcp'
 import { useAllToolProviders } from '@/service/use-tools'
 import { useInstalledPluginList, useInvalidateInstalledPluginList } from '@/service/use-plugins'
 import { useGlobalPublicStore } from '@/context/global-public-context'
+import { useOAuthCallback } from '@/hooks/use-oauth'
 
 const ProviderList = () => {
   const { t } = useTranslation()
   const { enable_marketplace } = useGlobalPublicStore(s => s.systemFeatures)
   const containerRef = useRef<HTMLDivElement>(null)
+  useOAuthCallback()
 
   const searchParams = useSearchParams()
   const authCode = searchParams.get('code') || ''
