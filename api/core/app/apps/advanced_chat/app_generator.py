@@ -431,6 +431,7 @@ class AdvancedChatAppGenerator(MessageBasedAppGenerator):
                 "conversation_id": conversation.id,
                 "message_id": message.id,
                 "context": context,
+                "variable_loader": variable_loader,
             },
         )
 
