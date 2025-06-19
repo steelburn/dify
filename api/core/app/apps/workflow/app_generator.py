@@ -227,6 +227,7 @@ class WorkflowAppGenerator(BaseAppGenerator):
                 "queue_manager": queue_manager,
                 "context": context,
                 "workflow_thread_pool_id": workflow_thread_pool_id,
+                "variable_loader": variable_loader,
             },
         )
 
