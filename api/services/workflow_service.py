@@ -367,6 +367,7 @@ class WorkflowService:
         variable_loader = DraftVarLoader(
             engine=db.engine,
             app_id=app_model.id,
+            tenant_id=app_model.tenant_id,
         )
 
         eclosing_node_type_and_id = draft_workflow.get_enclosing_node_type_and_id(node_config)
@@ -459,7 +460,7 @@ class WorkflowService:
                     node_run_result = event.run_result
 
                     # sign output files
-                    node_run_result.outputs = WorkflowEntry.handle_special_values(node_run_result.outputs)
+                    # node_run_result.outputs = WorkflowEntry.handle_special_values(node_run_result.outputs)
                     break
 
             if not node_run_result:
@@ -521,7 +522,7 @@ class WorkflowService:
                 if node_run_result.process_data
                 else None
             )
-            outputs = WorkflowEntry.handle_special_values(node_run_result.outputs) if node_run_result.outputs else None
+            outputs = node_run_result.outputs
 
             node_execution.inputs = inputs
             node_execution.process_data = process_data
